@@ -3,16 +3,14 @@ stages:
   - build
   - deploy
 
+default:
+  image: python:3.13-slim
+
 unit-tests:
   stage: test
-  image: 
-    name: python:3.13-slim
-    entrypoint: ['']
   before_script: 
-    - python -m pip install --no-cache-dir --user pipx
-    - python -m pipx ensurepath
-    - python -m pipx install poetry
-    - poetry config virtualenvs.in-project true
-    - poetry install --only main --no-interaction --no-root
+    - pip install poetry
+    - poetry install
+    - source `poetry env info --path`/bin/activate
   script: 
     - poetry run python -m unittest tests/*
