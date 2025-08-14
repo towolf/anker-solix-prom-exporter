@@ -1,6 +1,6 @@
 services:
   exporter:
-    image: nsd0oroessner/solix-exporter:dev
+    image: registry.gitlab.com/oroessner/anker-solix-prom-exporter
     build: .
     ports:
       - "127.0.0.1:9123:9123"
