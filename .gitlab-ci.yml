@@ -8,6 +8,8 @@ unit-tests:
   image: 
     name: python:3.13-alpine
     entrypoint: ['']
+  variables: 
+    SHELL: /bin/sh
   before_script: 
     - python -m pip install --no-cache-dir --user pipx
     - python -m pipx ensurepath
