@@ -8,6 +8,7 @@ unit-tests:
   image: python:3.13-alpine
   before_script: 
     - python -m pip install --no-cache-dir pipx
+    - python -m pipx ensurepath
     - python -m pipx install poetry
     - poetry install
   script: 
