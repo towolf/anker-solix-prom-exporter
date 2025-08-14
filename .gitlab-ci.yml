@@ -6,10 +6,8 @@ stages:
 unit-tests:
   stage: test
   image: 
-    name: python:3.13-alpine
+    name: python:3.13-slim
     entrypoint: ['']
-  variables: 
-    SHELL: /bin/sh
   before_script: 
     - python -m pip install --no-cache-dir --user pipx
     - python -m pipx ensurepath
