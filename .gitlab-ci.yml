@@ -8,8 +8,8 @@ unit-tests:
   image: python:3.13-alpine
   before_script: 
     - python -m pip install --no-cache-dir pipx
-    - pipx ensurepath
-    - pipx install poetry
-    - poetry install
+    - python -m pipx install poetry
+    - poetry config virtualenvs.in-project true
+    - poetry install --only main --no-interaction --no-root
   script: 
     - poetry run python -m unittest tests/*
