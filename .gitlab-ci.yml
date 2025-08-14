@@ -3,6 +3,14 @@ stages:
   - build
   - deploy
 
+include:
+  - component: $CI_SERVER_FQDN/PigeonF/ci/buildx-build@~latest
+    inputs:
+      stage: deploy
+      platforms: [linux/amd64, linux/arm64]
+      tags: [$CI_REGISTRY_IMAGE:$CI_PIPELINE_IID, $CI_REGISTRY_IMAGE:latest]
+      push: true
+      
 default:
   image: python:3.13-slim
 
