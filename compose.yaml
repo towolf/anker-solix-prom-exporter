@@ -1,0 +1,23 @@
+services:
+  exporter:
+    image: nsd0oroessner/solix-exporter:dev
+    build: .
+    ports:
+      - "127.0.0.1:9123:9123"
+    env_file:
+      - .env
+    volumes:
+      - ./exporter.py:/app/exporter.py:ro
+  
+  prometheus:
+    image: prom/prometheus:v3.5.0
+    ports:
+      - "127.0.0.1:9090:9090"
+    depends_on:
+      - exporter
+    volumes:
+      - ./.docker/prometheus.yaml:/etc/prometheus/prometheus.yaml:ro
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yaml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--storage.tsdb.retention.time=60d'
