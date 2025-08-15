@@ -12,11 +12,13 @@ Setup:
 - `poetry install`
 
 Run:
-- `poetry run python exporter.py`
-- Metrics available on http://127.0.0.1:${ANKER_EXPORTER_PORT:-9123}/metrics
+- `poetry run python -m anker_solix_prom_exporter`
+- Metrics available on <http://127.0.0.1:9123/metrics> (if you haven't changed the `ANKER_EXPORTER_PORT` variable!)
 
 Tests:
-- `poetry run python -m unittest -v`
+- `poetry run pytest`
+
+Before submitting a PR, please run `poetry run ruff check` and `poetry run ruff format` to format the code.
 
 Docker (dev):
 - `docker build -t anker-solix-prom-exporter .`

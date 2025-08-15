@@ -68,6 +68,60 @@ Endpoint: `/metrics` (text format compatible with Prometheus)
 Default port: `9123` (configurable via ANKER_EXPORTER_PORT)
 Refresh interval: every 30s by default (ANKER_SCRAPE_INTERVAL)
 
+### Metrics
+
+| Metric                                            | Type  | Description                                                                    |
+|---------------------------------------------------|-------|--------------------------------------------------------------------------------|
+| anker_site_home_load_power_watts                  | gauge | Current site home load power                                                   |
+| anker_site_to_home_load_power_watts               | gauge | Power from Solarbank to home load                                              |
+| anker_site_total_pv_power_watts                   | gauge | Total photovoltaic power of Solarbank(s)                                       |
+| anker_site_total_output_power_watts               | gauge | Total AC output power of Solarbank(s)                                          |
+| anker_site_total_charging_power_watts             | gauge | Total charging power to Solarbank batteries (can be negative when discharging) |
+| anker_site_battery_discharge_power_watts          | gauge | Battery discharge power total (if provided)                                    |
+| anker_site_solarbanks_cascaded                    | gauge | Whether multiple Solarbank generations are cascaded (1) or not (0)             |
+| anker_site_smart_plugs_total_power_watts          | gauge | Total power of smart plugs in site                                             |
+| anker_site_other_loads_power_watts                | gauge | Other loads (planned) power                                                    |
+| anker_site_retain_load_preset_watts               | gauge | Site retain load preset (W)                                                    |
+| anker_site_data_valid                             | gauge | Whether site data is valid (1) or not (0)                                      |
+| anker_site_total_battery_soc_percent              | gauge | Total Solarbank state-of-charge (percent)                                      |
+| anker_device_info                                 | gauge | Static info about the device (always 1)                                        |
+| anker_device_battery_soc_percent                  | gauge | Device battery state-of-charge (percent)                                       |
+| anker_device_battery_energy_wh                    | gauge | Device battery energy (Wh)                                                     |
+| anker_device_input_power_watts                    | gauge | Device input (PV) power (W)                                                    |
+| anker_device_output_power_watts                   | gauge | Device output (AC/home load) power (W)                                         |
+| anker_device_battery_power_watts                  | gauge | Battery net power (W). Positive = discharge to AC, negative = charge           |
+| anker_device_bat_charge_power_watts               | gauge | Battery charge power (W)                                                       |
+| anker_device_ac_power_watts                       | gauge | Inverter AC generation power (W)                                               |
+| anker_device_micro_inverter_power_watts           | gauge | Micro-inverter power (W)                                                       |
+| anker_device_micro_inverter_power_limit_watts     | gauge | Micro-inverter power limit (W)                                                 |
+| anker_device_grid_import_power_watts              | gauge | Grid import power to home (W)                                                  |
+| anker_device_grid_export_power_watts              | gauge | Photovoltaic export power to grid (W)                                          |
+| anker_device_plug_power_watts                     | gauge | Smart plug current power (W)                                                   |
+| anker_device_energy_today_kwh                     | gauge | Device energy today (kWh)                                                      |
+| anker_device_solar_power_1_watts                  | gauge | PV string 1 power (W)                                                          |
+| anker_device_solar_power_2_watts                  | gauge | PV string 2 power (W)                                                          |
+| anker_device_solar_power_3_watts                  | gauge | PV string 3 power (W)                                                          |
+| anker_device_solar_power_4_watts                  | gauge | PV string 4 power (W)                                                          |
+| anker_device_ac_port_power_watts                  | gauge | AC port output power (W)                                                       |
+| anker_device_other_input_power_watts              | gauge | Other input power (W)                                                          |
+| anker_device_micro_inverter_low_power_limit_watts | gauge | Micro-inverter low power limit (W)                                             |
+| anker_device_grid_to_battery_power_watts          | gauge | Grid to battery power (W)                                                      |
+| anker_device_pei_heating_power_watts              | gauge | PEI heating power (W)                                                          |
+| anker_device_set_output_power_watts               | gauge | Device preset output power (W)                                                 |
+| anker_device_set_system_output_power_watts        | gauge | System preset output power (W)                                                 |
+| anker_device_wifi_signal_percent                  | gauge | WiFi signal strength (percent)                                                 |
+| anker_device_wifi_rssi_dbm                        | gauge | WiFi RSSI (dBm)                                                                |
+| anker_device_wifi_online                          | gauge | WiFi connectivity (1 online, 0 offline)                                        |
+| anker_device_wired_connected                      | gauge | Wired connection present (1 yes, 0 no)                                         |
+| anker_device_status_code                          | gauge | Device status code                                                             |
+| anker_device_charging_status_code                 | gauge | Charging status code                                                           |
+| anker_device_grid_status_code                     | gauge | Grid status code                                                               |
+| anker_device_data_valid                           | gauge | Whether device data is valid (1) or not (0)                                    |
+| anker_device_is_ota_update                        | gauge | OTA update available (1) or not (0)                                            |
+| anker_device_auto_upgrade                         | gauge | Auto upgrade enabled (1) or disabled (0)                                       |
+| anker_device_battery_capacity_wh                  | gauge | Battery capacity (Wh)                                                          |
+| anker_device_sub_package_num                      | gauge | Sub package number                                                             |
+
 ## How it works / Credits
 
 - API client: [anker-solix-api by thomluther (GitHub)](https://github.com/thomluther/anker-solix-api) — used for

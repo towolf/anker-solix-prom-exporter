@@ -7,7 +7,7 @@ services:
     env_file:
       - .env
     volumes:
-      - ./exporter.py:/app/exporter.py:ro
+      - ./src/anker_solix_prom_exporter:/anker_solix_prom_exporter:ro
   
   prometheus:
     image: prom/prometheus:v3.5.0

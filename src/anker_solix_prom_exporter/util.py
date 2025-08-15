@@ -1,0 +1,51 @@
+import logging
+import getpass
+import os
+
+# create logger
+CONSOLE: logging.Logger = logging.getLogger(__name__)
+# Set parent to lowest level to allow messages passed to all handlers using their own level
+CONSOLE.setLevel(logging.DEBUG)
+
+# create console handler and set level to info
+ch = logging.StreamHandler()
+# This can be changed to DEBUG if more messages should be printed to console
+ch.setLevel(logging.INFO)
+CONSOLE.addHandler(ch)
+
+_CREDENTIALS = {
+    "USER": os.getenv("ANKERUSER"),
+    "PASSWORD": os.getenv("ANKERPASSWORD"),
+    "COUNTRY": os.getenv("ANKERCOUNTRY"),
+}
+
+
+def user() -> str:
+    """Get anker account user."""
+    if _CREDENTIALS.get("USER"):
+        return _CREDENTIALS["USER"]
+    CONSOLE.info("\nEnter Anker Account credentials:")
+    username = input("Username (email): ")
+    while not username:
+        username = input("Username (email): ")
+    return username
+
+
+def password() -> str:
+    """Get anker account password."""
+    if _CREDENTIALS.get("PASSWORD"):
+        return _CREDENTIALS["PASSWORD"]
+    pwd = getpass.getpass("Password: ")
+    while not pwd:
+        pwd = getpass.getpass("Password: ")
+    return pwd
+
+
+def country() -> str:
+    """Get anker account country."""
+    if _CREDENTIALS.get("COUNTRY"):
+        return _CREDENTIALS["COUNTRY"]
+    countrycode = input("Country ID (e.g. DE): ")
+    while not countrycode:
+        countrycode = input("Country ID (e.g. DE): ")
+    return countrycode

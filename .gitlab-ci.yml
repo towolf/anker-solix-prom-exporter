@@ -1,24 +1,38 @@
-stages:
-  - test 
-  - build
-  - deploy
+default:
+  image: python:3.13-slim
+  
+workflow:
+  rules:
+    - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
+    - if: $CI_COMMIT_TAG
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
 
 include:
   - component: $CI_SERVER_FQDN/PigeonF/ci/buildx-build@~latest
     inputs:
       stage: deploy
-      platforms: [linux/amd64, linux/arm64]
-      tags: [$CI_REGISTRY_IMAGE:$CI_PIPELINE_IID, $CI_REGISTRY_IMAGE:latest]
+      platforms: [ linux/amd64, linux/arm64 ]
+      tags: [ $CI_REGISTRY_IMAGE:$CI_PIPELINE_IID, $CI_REGISTRY_IMAGE:latest ]
       push: true
-      
-default:
-  image: python:3.13-slim
 
-unit-tests:
-  stage: test
-  before_script: 
+.poetry:
+  before_script:
     - pip install poetry
     - poetry install
     - source `poetry env info --path`/bin/activate
-  script: 
-    - poetry run python -m unittest tests/*
+
+lint:
+  stage: test
+  extends: .poetry
+  script:
+    - poetry run ruff check
+
+unit-tests:
+  stage: test
+  extends: .poetry
+  script:
+    - poetry run pytest
+
+docker buildx build:
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
