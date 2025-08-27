@@ -13,7 +13,7 @@ WORKDIR /app
 COPY pyproject.toml poetry.lock ./
 
 RUN <<EOF
-    python -m pip install --no-cache-dir --root-user-action pipx
+    python -m pip install --no-cache-dir pipx
     python -m pipx install poetry
     poetry install --only main --no-interaction --no-ansi --no-root
 EOF
