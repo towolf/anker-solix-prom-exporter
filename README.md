@@ -9,6 +9,12 @@ project)
 
 ## Usage
 
+tl;dr:
+
+```shell
+docker run --rm -p "127.0.0.1:9123:9123" -e ANKERUSER=<user> -e ANKERPASSWORD=<password> -e ANKERCOUNTRY=<country> djbasster/anker-solix-prom-exporter
+```
+
 The exporter reads configuration from environment variables and serves metrics at `/metrics`. The easiest way to run it
 is via Docker or Docker Compose.
 
