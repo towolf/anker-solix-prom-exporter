@@ -7,6 +7,8 @@ This project builds on top of the
 excellent [Anker Solix API client library by thomluther](https://github.com/thomluther/anker-solix-api) (v3.1.1 in this
 project)
 
+You can find the docker image on the [Gitlab Container Registry](https://gitlab.com/oroessner/anker-solix-prom-exporter/container_registry) and on [Docker Hub](https://hub.docker.com/r/djbasster/anker-solix-prom-exporter).
+
 ## Usage
 
 tl;dr:
