@@ -35,4 +35,25 @@ unit-tests:
 
 docker buildx build:
   rules:
+    - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+
+publish:dockerhub:
+  image: jonoh/docker-buildx-qemu
+  before_script:
+    - docker login -u $DOCKER_HUB_USER -p $DOCKER_HUB_TOKEN
+#    - #docker buildx create --name "${BUILDER_NAME}" --driver docker-container --use
+#    - docker buildx inspect --bootstrap
+#  after_script:
+#    - docker buildx rm "${BUILDER_NAME}"
+  stage: deploy
+  needs: [ "docker buildx build" ]
+  variables:
+    TARGET_IMAGE: djbasster/anker-solix-prom-exporter
+    BUILDER_NAME: multiarch-$CI_JOB_ID
+  script:
+    - docker buildx imagetools create -t "${TARGET_IMAGE}:${CI_PIPELINE_IID}" "${CI_REGISTRY_IMAGE}:${CI_PIPELINE_IID}"
+    - docker buildx imagetools create -t "${TARGET_IMAGE}:latest" "${CI_REGISTRY_IMAGE}:latest"
+  rules:
+    - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
+#    - if: $CI_COMMIT_TAG
