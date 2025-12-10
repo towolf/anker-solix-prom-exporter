@@ -130,6 +130,11 @@ anker_site_total_savings_money = Gauge(
     "Total monetary savings/revenue for the site",
     labelnames=["site_id", "site_name"]
 )
+anker_site_price = Gauge(
+    "anker_site_price",
+    "Site energy price",
+    labelnames=["site_id", "site_name", "price_type", "unit"]
+)
 
 # Device metrics - Gauge
 anker_device_info = Gauge(
@@ -405,6 +410,23 @@ async def _poll_and_update_metrics(client: api.AnkerSolixApi, interval: int) -> 
                                 if unit == "wh":
                                     f = f / 1000.0
                                 _set_gauge(anker_site_total_energy_produced_kwh, s_labels, f)
+                    elif stat.get("type") == "3":
+                        val = stat.get("total")
+                        if val is not None:
+                            f = _as_float(val)
+                            if f is not None:
+                                _set_gauge(anker_site_total_savings_money, s_labels, f)
+
+                site_details = site.get("site_details") or {}
+                if (price := site_details.get("price")) is not None:
+                    price_labels = dict(s_labels)
+                    price_labels.update(
+                        {
+                            "price_type": str(site_details.get("price_type") or "fixed"),
+                            "unit": str(site_details.get("site_price_unit") or ""),
+                        }
+                    )
+                    _set_gauge(anker_site_price, price_labels, price)
 
             # Export device metrics
             for sn, dev in client.devices.items():

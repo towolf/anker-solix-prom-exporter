@@ -27,7 +27,13 @@ class FakeClient(api.AnkerSolixApi):
                 "statistics": [
                     {"type": "1", "total": "123.45", "unit": "kwh"},
                     {"type": "2", "total": "100", "unit": "kg"},
+                    {"type": "3", "total": "45.67", "unit": "€"},
                 ],
+                "site_details": {
+                    "price": 0.30,
+                    "site_price_unit": "EUR",
+                    "price_type": "fixed",
+                },
             }
         }
         self.devices = {
@@ -219,6 +225,16 @@ _metric_cases = [
         "anker_site_total_energy_produced_kwh",
         None,
         lambda v: float(v) == 123.45,
+    ),
+    (
+        "anker_site_total_savings_money",
+        None,
+        lambda v: float(v) == 45.67,
+    ),
+    (
+        "anker_site_price",
+        lambda l: l.get("price_type") == "fixed" and l.get("unit") == "EUR",
+        lambda v: float(v) == 0.30,
     ),
     # Device info
     (
