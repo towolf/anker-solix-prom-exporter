@@ -108,6 +108,16 @@ anker_site_updated_timestamp_seconds = Counter(
     "Last update timestamp of Solarbank info as seconds since the epoch",
     labelnames=["site_id", "site_name"]
 )
+anker_site_energy_offset_seconds = Counter(
+    "anker_site_energy_offset_seconds",
+    "Energy offset in seconds for the site",
+    labelnames=["site_id", "site_name"]
+)
+anker_site_energy_offset_check = Counter(
+    "anker_site_energy_offset_check",
+    "Last energy offset check timestamp as seconds since the epoch",
+    labelnames=["site_id", "site_name"]
+)
 
 # Device metrics - Gauge
 anker_device_info = Gauge(
@@ -180,25 +190,10 @@ anker_device_energy_today_kwh = Gauge(
     "Device energy today (kWh)",
     labelnames=["device_sn", "name"]
 )
-anker_device_solar_power_1_watts = Gauge(
-    "anker_device_solar_power_1_watts",
-    "PV string 1 power (W)",
-    labelnames=["device_sn", "name"]
-)
-anker_device_solar_power_2_watts = Gauge(
-    "anker_device_solar_power_2_watts",
-    "PV string 2 power (W)",
-    labelnames=["device_sn", "name"]
-)
-anker_device_solar_power_3_watts = Gauge(
-    "anker_device_solar_power_3_watts",
-    "PV string 3 power (W)",
-    labelnames=["device_sn", "name"]
-)
-anker_device_solar_power_4_watts = Gauge(
-    "anker_device_solar_power_4_watts",
-    "PV string 4 power (W)",
-    labelnames=["device_sn", "name"]
+anker_device_solar_power_watts = Gauge(
+    "anker_device_solar_power_watts",
+    "PV string power (W)",
+    labelnames=["device_sn", "name", "panel"]
 )
 anker_device_ac_port_power_watts = Gauge(
     "anker_device_ac_port_power_watts",
@@ -377,6 +372,16 @@ async def _poll_and_update_metrics(client: api.AnkerSolixApi, interval: int) -> 
                         _inc_counter(anker_site_updated_timestamp_seconds, s_labels, timestamp)
                     except Exception:
                         pass
+                
+                if site.get("energy_offset_seconds") is not None:
+                    _inc_counter(anker_site_energy_offset_seconds, s_labels, site.get("energy_offset_seconds"))
+                
+                if site.get("energy_offset_check"):
+                    try:
+                        timestamp = datetime.strptime(site["energy_offset_check"], "%Y-%m-%d %H:%M:%S").timestamp()
+                        _inc_counter(anker_site_energy_offset_check, s_labels, timestamp)
+                    except Exception:
+                        pass
 
             # Export device metrics
             for sn, dev in client.devices.items():
@@ -412,10 +417,14 @@ async def _poll_and_update_metrics(client: api.AnkerSolixApi, interval: int) -> 
                 _set_gauge(anker_device_grid_export_power_watts, d_labels, dev.get("photovoltaic_to_grid_power"))
                 _set_gauge(anker_device_plug_power_watts, d_labels, dev.get("current_power"))
                 _set_gauge(anker_device_energy_today_kwh, d_labels, dev.get("energy_today"))
-                _set_gauge(anker_device_solar_power_1_watts, d_labels, dev.get("solar_power_1"))
-                _set_gauge(anker_device_solar_power_2_watts, d_labels, dev.get("solar_power_2"))
-                _set_gauge(anker_device_solar_power_3_watts, d_labels, dev.get("solar_power_3"))
-                _set_gauge(anker_device_solar_power_4_watts, d_labels, dev.get("solar_power_4"))
+                
+                for panel_idx in range(1, 5):
+                    solar_key = f"solar_power_{panel_idx}"
+                    if dev.get(solar_key) is not None:
+                        panel_labels = dict(d_labels)
+                        panel_labels["panel"] = str(panel_idx)
+                        _set_gauge(anker_device_solar_power_watts, panel_labels, dev.get(solar_key))
+                
                 _set_gauge(anker_device_ac_port_power_watts, d_labels, dev.get("ac_power"))
                 _set_gauge(anker_device_other_input_power_watts, d_labels, dev.get("other_input_power"))
                 _set_gauge(anker_device_micro_inverter_low_power_limit_watts, d_labels, dev.get("micro_inverter_low_power_limit"))
