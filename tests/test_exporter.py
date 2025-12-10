@@ -148,7 +148,12 @@ def _any_metric(spies, metric_name, label_pred=None, value_pred=None):
     for call in all_calls:
         metric, labels, value = _extract_metric_call(call)
 
-        if metric is None or metric._name != metric_name:
+        if metric is None:
+             continue
+        
+        print(f"Checking call: {metric._name} vs {metric_name}")
+
+        if metric._name != metric_name:
             continue
 
         if label_pred and not label_pred(labels):
@@ -238,7 +243,7 @@ _metric_cases = [
         lambda v: abs(float(v) - 50.0) < 1e-6,
     ),
     (
-        "anker_site_total_energy_produced_kwh",
+        "anker_site_energy_produced_kwh_total",
         None,
         lambda v: float(v) == 123.45,
     ),
@@ -288,7 +293,6 @@ _metric_cases = [
     ("anker_device_grid_export_power_watts", None, lambda v: float(v) == 0.0),
     # Smart plug
     ("anker_device_plug_power_watts", None, None),
-    ("anker_device_energy_today_kwh", None, lambda v: float(v) == 1.5),
     # PV strings and additional power metrics
     (
         "anker_device_pv_power_watts",

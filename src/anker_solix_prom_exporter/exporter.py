@@ -28,7 +28,10 @@ from datetime import datetime
 from aiohttp import ClientSession
 from aiohttp.client_exceptions import ClientError
 from dotenv import load_dotenv
-from prometheus_client import Gauge, start_http_server, Counter
+from prometheus_client import Gauge, start_http_server, Counter, disable_created_metrics
+
+# Disable _created metrics for Counters
+disable_created_metrics()
 
 # Load .env before importing modules that read env at import time
 load_dotenv()
@@ -113,16 +116,21 @@ anker_site_energy_offset_check = Counter(
     "Last energy offset check timestamp as seconds since the epoch",
     labelnames=["site_id", "site_name"]
 )
+anker_site_energy_produced_kwh_total = Counter(
+    "anker_site_energy_produced_kwh_total",
+    "Total energy produced by the site (kWh)",
+    labelnames=["site_id", "site_name"]
+)
+anker_site_energy_today_kwh = Counter(
+    "anker_site_energy_today_kwh",
+    "Energy values for today (kWh)",
+    labelnames=["site_id", "site_name", "type"]
+)
 
 # Site metrics - Gauge (continued)
 anker_site_energy_offset_seconds = Gauge(
     "anker_site_energy_offset_seconds",
     "Energy offset in seconds for the site",
-    labelnames=["site_id", "site_name"]
-)
-anker_site_total_energy_produced_kwh = Gauge(
-    "anker_site_total_energy_produced_kwh",
-    "Total energy produced by the site (kWh)",
     labelnames=["site_id", "site_name"]
 )
 anker_site_total_savings_money = Gauge(
@@ -134,11 +142,6 @@ anker_site_price = Gauge(
     "anker_site_price",
     "Site energy price",
     labelnames=["site_id", "site_name", "price_type", "unit"]
-)
-anker_site_energy_today_kwh = Counter(
-    "anker_site_energy_today_kwh",
-    "Energy values for today (kWh)",
-    labelnames=["site_id", "site_name", "type"]
 )
 
 # Device metrics - Gauge
@@ -410,7 +413,7 @@ async def _poll_and_update_metrics(client: api.AnkerSolixApi, interval: int) -> 
                             if f is not None:
                                 if unit == "wh":
                                     f = f / 1000.0
-                                _set_gauge(anker_site_total_energy_produced_kwh, s_labels, f)
+                                _inc_counter(anker_site_energy_produced_kwh_total, s_labels, f)
                     elif stat.get("type") == "3":
                         val = stat.get("total")
                         if val is not None:
