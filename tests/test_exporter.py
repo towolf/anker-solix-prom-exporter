@@ -34,6 +34,17 @@ class FakeClient(api.AnkerSolixApi):
                     "site_price_unit": "EUR",
                     "price_type": "fixed",
                 },
+                "energy_details": {
+                    "today": {
+                        "date": "2023-10-01",
+                        "solar_production": "10.5",
+                        "battery_discharge": "5.2",
+                        "battery_charge": "4.1",
+                        "home_usage": "8.3",
+                        "grid_to_home": "2.1",
+                        "smartplug_list": [],
+                    }
+                },
             }
         }
         self.devices = {
@@ -91,12 +102,14 @@ class FakeClient(api.AnkerSolixApi):
         self.update_sites = mocker.AsyncMock(return_value={})
         self.update_device_details = mocker.AsyncMock(return_value={})
         self.update_site_details = mocker.AsyncMock(return_value={})
+        self.update_device_energy = mocker.AsyncMock(return_value={})
 
 
 @pytest.fixture
 def poll_ctx(mocker):
     fake = FakeClient(mocker)
-    spy = mocker.patch.object(exporter, "_set_gauge", wraps=exporter._set_gauge)
+    spy_gauge = mocker.patch.object(exporter, "_set_gauge", wraps=exporter._set_gauge)
+    spy_counter = mocker.patch.object(exporter, "_inc_counter", wraps=exporter._inc_counter)
     # Run one poll iteration
     try:
         asyncio.run(
@@ -106,17 +119,17 @@ def poll_ctx(mocker):
         )
     except asyncio.TimeoutError:
         pass
-    return fake, spy
+    return fake, spy_gauge, spy_counter
 
 
 def _extract_metric_call(call):
-    """Extract (gauge, labels, value) from a mock call to _set_gauge supporting positional/keyword args."""
+    """Extract (metric, labels, value) from a mock call to _set_gauge or _inc_counter supporting positional/keyword args."""
     # Get args and kwargs, handling both call types
     args = getattr(call, "args", ())
     kwargs = getattr(call, "kwargs", {})
 
-    # Extract gauge (always first positional)
-    gauge = args[0] if args else None
+    # Extract metric (always first positional)
+    metric = args[0] if args else None
 
     # Extract labels (keyword or 2nd positional)
     labels = kwargs.get("labels", args[1] if len(args) >= 2 else {})
@@ -124,15 +137,18 @@ def _extract_metric_call(call):
     # Extract value (keyword or 3rd positional)
     value = kwargs.get("value", args[2] if len(args) >= 3 else None)
 
-    return gauge, labels, value
+    return metric, labels, value
 
 
-def _any_metric(spy, metric_name, label_pred=None, value_pred=None):
+def _any_metric(spies, metric_name, label_pred=None, value_pred=None):
     """Check if any metric call matches the given criteria."""
-    for call in spy.mock_calls:
-        gauge, labels, value = _extract_metric_call(call)
+    spy_gauge, spy_counter = spies
+    all_calls = spy_gauge.mock_calls + spy_counter.mock_calls
+    
+    for call in all_calls:
+        metric, labels, value = _extract_metric_call(call)
 
-        if gauge is None or gauge._name != metric_name:
+        if metric is None or metric._name != metric_name:
             continue
 
         if label_pred and not label_pred(labels):
@@ -189,10 +205,10 @@ def test_set_gauge_sets_value_with_labels():
 
 
 @pytest.mark.parametrize(
-    "attr", ["update_sites", "update_device_details", "update_site_details"]
+    "attr", ["update_sites", "update_device_details", "update_site_details", "update_device_energy"]
 )
 def test_poll_updates_called_param(poll_ctx, attr):
-    fake, _ = poll_ctx
+    fake, _, _ = poll_ctx
     assert getattr(fake, attr).await_count >= 1
 
 
@@ -235,6 +251,16 @@ _metric_cases = [
         "anker_site_price",
         lambda l: l.get("price_type") == "fixed" and l.get("unit") == "EUR",
         lambda v: float(v) == 0.30,
+    ),
+    (
+        "anker_site_energy_today_kwh",
+        lambda l: l.get("type") == "solar_production",
+        lambda v: float(v) == 10.5,
+    ),
+    (
+        "anker_site_energy_today_kwh",
+        lambda l: l.get("type") == "battery_discharge",
+        lambda v: float(v) == 5.2,
     ),
     # Device info
     (
@@ -316,5 +342,5 @@ _metric_cases = [
 
 @pytest.mark.parametrize("metric_name,label_pred,value_pred", _metric_cases)
 def test_metrics_emitted_param(poll_ctx, metric_name, label_pred, value_pred):
-    _, spy = poll_ctx
-    assert _any_metric(spy, metric_name, label_pred, value_pred)
+    _, spy_gauge, spy_counter = poll_ctx
+    assert _any_metric((spy_gauge, spy_counter), metric_name, label_pred, value_pred)

@@ -135,6 +135,11 @@ anker_site_price = Gauge(
     "Site energy price",
     labelnames=["site_id", "site_name", "price_type", "unit"]
 )
+anker_site_energy_today_kwh = Counter(
+    "anker_site_energy_today_kwh",
+    "Energy values for today (kWh)",
+    labelnames=["site_id", "site_name", "type"]
+)
 
 # Device metrics - Gauge
 anker_device_info = Gauge(
@@ -200,11 +205,6 @@ anker_device_grid_export_power_watts = Gauge(
 anker_device_plug_power_watts = Gauge(
     "anker_device_plug_power_watts",
     "Smart plug current power (W)",
-    labelnames=["device_sn", "name"]
-)
-anker_device_energy_today_kwh = Gauge(
-    "anker_device_energy_today_kwh",
-    "Device energy today (kWh)",
     labelnames=["device_sn", "name"]
 )
 anker_device_pv_power_watts = Gauge(
@@ -355,6 +355,7 @@ async def _poll_and_update_metrics(client: api.AnkerSolixApi, interval: int) -> 
             await client.update_sites()
             await client.update_device_details()
             await client.update_site_details()
+            await client.update_device_energy()
 
             # Export site metrics
             for site_id, site in client.sites.items():
@@ -428,6 +429,17 @@ async def _poll_and_update_metrics(client: api.AnkerSolixApi, interval: int) -> 
                     )
                     _set_gauge(anker_site_price, price_labels, price)
 
+                energy_today = (site.get("energy_details") or {}).get("today") or {}
+                for key, value in energy_today.items():
+                    if key == "date" or "smartplug" in key:
+                        continue
+                    if value is not None:
+                        f = _as_float(value)
+                        if f is not None:
+                            energy_labels = dict(s_labels)
+                            energy_labels.update({"type": key})
+                            _inc_counter(anker_site_energy_today_kwh, energy_labels, f)
+
             # Export device metrics
             for sn, dev in client.devices.items():
                 d_labels = {
@@ -461,7 +473,6 @@ async def _poll_and_update_metrics(client: api.AnkerSolixApi, interval: int) -> 
                 _set_gauge(anker_device_grid_import_power_watts, d_labels, dev.get("grid_to_home_power"))
                 _set_gauge(anker_device_grid_export_power_watts, d_labels, dev.get("photovoltaic_to_grid_power"))
                 _set_gauge(anker_device_plug_power_watts, d_labels, dev.get("current_power"))
-                _set_gauge(anker_device_energy_today_kwh, d_labels, dev.get("energy_today"))
                 
                 pv_names = dev.get("pv_name") or {}
                 for panel_idx in range(1, 5):
