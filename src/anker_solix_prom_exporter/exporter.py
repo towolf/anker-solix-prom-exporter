@@ -113,187 +113,187 @@ anker_site_updated_timestamp_seconds = Counter(
 anker_device_info = Gauge(
     "anker_device_info",
     "Static info about the device (always 1)",
-    labelnames=["device_sn", "site_id", "type", "name", "device_pn", "generation", "sw_version"]
+    labelnames=["device_sn", "name", "device_pn", "generation", "sw_version"]
 )
 anker_device_battery_soc_percent = Gauge(
     "anker_device_battery_soc_percent",
     "Device battery state-of-charge (percent)",
-    labelnames=["device_sn", "site_id", "type", "name"]
+    labelnames=["device_sn", "name"]
 )
 anker_device_battery_energy_wh = Gauge(
     "anker_device_battery_energy_wh",
     "Device battery energy (Wh)",
-    labelnames=["device_sn", "site_id", "type", "name"]
+    labelnames=["device_sn", "name"]
 )
 anker_device_input_power_watts = Gauge(
     "anker_device_input_power_watts",
     "Device input (PV) power (W)",
-    labelnames=["device_sn", "site_id", "type", "name"]
+    labelnames=["device_sn", "name"]
 )
 anker_device_output_power_watts = Gauge(
     "anker_device_output_power_watts",
     "Device output (AC/home load) power (W)",
-    labelnames=["device_sn", "site_id", "type", "name"]
+    labelnames=["device_sn", "name"]
 )
 anker_device_battery_power_watts = Gauge(
     "anker_device_battery_power_watts",
     "Battery net power (W). Positive = discharge to AC, negative = charge",
-    labelnames=["device_sn", "site_id", "type", "name"]
+    labelnames=["device_sn", "name"]
 )
 anker_device_bat_charge_power_watts = Gauge(
     "anker_device_bat_charge_power_watts",
     "Battery charge power (W)",
-    labelnames=["device_sn", "site_id", "type", "name"]
+    labelnames=["device_sn", "name"]
 )
 anker_device_ac_power_watts = Gauge(
     "anker_device_ac_power_watts",
     "Inverter AC generation power (W)",
-    labelnames=["device_sn", "site_id", "type", "name"]
+    labelnames=["device_sn", "name"]
 )
 anker_device_micro_inverter_power_watts = Gauge(
     "anker_device_micro_inverter_power_watts",
     "Micro-inverter power (W)",
-    labelnames=["device_sn", "site_id", "type", "name"]
+    labelnames=["device_sn", "name"]
 )
 anker_device_micro_inverter_power_limit_watts = Gauge(
     "anker_device_micro_inverter_power_limit_watts",
     "Micro-inverter power limit (W)",
-    labelnames=["device_sn", "site_id", "type", "name"]
+    labelnames=["device_sn", "name"]
 )
 anker_device_grid_import_power_watts = Gauge(
     "anker_device_grid_import_power_watts",
     "Grid import power to home (W)",
-    labelnames=["device_sn", "site_id", "type", "name"]
+    labelnames=["device_sn", "name"]
 )
 anker_device_grid_export_power_watts = Gauge(
     "anker_device_grid_export_power_watts",
     "Photovoltaic export power to grid (W)",
-    labelnames=["device_sn", "site_id", "type", "name"]
+    labelnames=["device_sn", "name"]
 )
 anker_device_plug_power_watts = Gauge(
     "anker_device_plug_power_watts",
     "Smart plug current power (W)",
-    labelnames=["device_sn", "site_id", "type", "name"]
+    labelnames=["device_sn", "name"]
 )
 anker_device_energy_today_kwh = Gauge(
     "anker_device_energy_today_kwh",
     "Device energy today (kWh)",
-    labelnames=["device_sn", "site_id", "type", "name"]
+    labelnames=["device_sn", "name"]
 )
 anker_device_solar_power_1_watts = Gauge(
     "anker_device_solar_power_1_watts",
     "PV string 1 power (W)",
-    labelnames=["device_sn", "site_id", "type", "name"]
+    labelnames=["device_sn", "name"]
 )
 anker_device_solar_power_2_watts = Gauge(
     "anker_device_solar_power_2_watts",
     "PV string 2 power (W)",
-    labelnames=["device_sn", "site_id", "type", "name"]
+    labelnames=["device_sn", "name"]
 )
 anker_device_solar_power_3_watts = Gauge(
     "anker_device_solar_power_3_watts",
     "PV string 3 power (W)",
-    labelnames=["device_sn", "site_id", "type", "name"]
+    labelnames=["device_sn", "name"]
 )
 anker_device_solar_power_4_watts = Gauge(
     "anker_device_solar_power_4_watts",
     "PV string 4 power (W)",
-    labelnames=["device_sn", "site_id", "type", "name"]
+    labelnames=["device_sn", "name"]
 )
 anker_device_ac_port_power_watts = Gauge(
     "anker_device_ac_port_power_watts",
     "AC port output power (W)",
-    labelnames=["device_sn", "site_id", "type", "name"]
+    labelnames=["device_sn", "name"]
 )
 anker_device_other_input_power_watts = Gauge(
     "anker_device_other_input_power_watts",
     "Other input power (W)",
-    labelnames=["device_sn", "site_id", "type", "name"]
+    labelnames=["device_sn", "name"]
 )
 anker_device_micro_inverter_low_power_limit_watts = Gauge(
     "anker_device_micro_inverter_low_power_limit_watts",
     "Micro-inverter low power limit (W)",
-    labelnames=["device_sn", "site_id", "type", "name"]
+    labelnames=["device_sn", "name"]
 )
 anker_device_grid_to_battery_power_watts = Gauge(
     "anker_device_grid_to_battery_power_watts",
     "Grid to battery power (W)",
-    labelnames=["device_sn", "site_id", "type", "name"]
+    labelnames=["device_sn", "name"]
 )
 anker_device_pei_heating_power_watts = Gauge(
     "anker_device_pei_heating_power_watts",
     "PEI heating power (W)",
-    labelnames=["device_sn", "site_id", "type", "name"]
+    labelnames=["device_sn", "name"]
 )
 anker_device_set_output_power_watts = Gauge(
     "anker_device_set_output_power_watts",
     "Device preset output power (W)",
-    labelnames=["device_sn", "site_id", "type", "name"]
+    labelnames=["device_sn", "name"]
 )
 anker_device_set_system_output_power_watts = Gauge(
     "anker_device_set_system_output_power_watts",
     "System preset output power (W)",
-    labelnames=["device_sn", "site_id", "type", "name"]
+    labelnames=["device_sn", "name"]
 )
 anker_device_wifi_signal_percent = Gauge(
     "anker_device_wifi_signal_percent",
     "WiFi signal strength (percent)",
-    labelnames=["device_sn", "site_id", "type", "name"]
+    labelnames=["device_sn", "name"]
 )
 anker_device_wifi_rssi_dbm = Gauge(
     "anker_device_wifi_rssi_dbm",
     "WiFi RSSI (dBm)",
-    labelnames=["device_sn", "site_id", "type", "name"]
+    labelnames=["device_sn", "name"]
 )
 anker_device_wifi_online = Gauge(
     "anker_device_wifi_online",
     "WiFi connectivity (1 online, 0 offline)",
-    labelnames=["device_sn", "site_id", "type", "name"]
+    labelnames=["device_sn", "name"]
 )
 anker_device_wired_connected = Gauge(
     "anker_device_wired_connected",
     "Wired connection present (1 yes, 0 no)",
-    labelnames=["device_sn", "site_id", "type", "name"]
+    labelnames=["device_sn", "name"]
 )
 anker_device_status_code = Gauge(
     "anker_device_status_code",
     "Device status code",
-    labelnames=["device_sn", "site_id", "type", "name"]
+    labelnames=["device_sn", "name"]
 )
 anker_device_charging_status_code = Gauge(
     "anker_device_charging_status_code",
     "Charging status code",
-    labelnames=["device_sn", "site_id", "type", "name"]
+    labelnames=["device_sn", "name"]
 )
 anker_device_grid_status_code = Gauge(
     "anker_device_grid_status_code",
     "Grid status code",
-    labelnames=["device_sn", "site_id", "type", "name"]
+    labelnames=["device_sn", "name"]
 )
 anker_device_data_valid = Gauge(
     "anker_device_data_valid",
     "Whether device data is valid (1) or not (0)",
-    labelnames=["device_sn", "site_id", "type", "name"]
+    labelnames=["device_sn", "name"]
 )
 anker_device_is_ota_update = Gauge(
     "anker_device_is_ota_update",
     "OTA update available (1) or not (0)",
-    labelnames=["device_sn", "site_id", "type", "name"]
+    labelnames=["device_sn", "name"]
 )
 anker_device_auto_upgrade = Gauge(
     "anker_device_auto_upgrade",
     "Auto upgrade enabled (1) or disabled (0)",
-    labelnames=["device_sn", "site_id", "type", "name"]
+    labelnames=["device_sn", "name"]
 )
 anker_device_battery_capacity_wh = Gauge(
     "anker_device_battery_capacity_wh",
     "Battery capacity (Wh)",
-    labelnames=["device_sn", "site_id", "type", "name"]
+    labelnames=["device_sn", "name"]
 )
 anker_device_sub_package_num = Gauge(
     "anker_device_sub_package_num",
     "Sub package number",
-    labelnames=["device_sn", "site_id", "type", "name"]
+    labelnames=["device_sn", "name"]
 )
 
 
@@ -382,8 +382,6 @@ async def _poll_and_update_metrics(client: api.AnkerSolixApi, interval: int) -> 
             for sn, dev in client.devices.items():
                 d_labels = {
                     "device_sn": str(sn),
-                    "site_id": str(dev.get("site_id") or ""),
-                    "type": str(dev.get("type") or "unknown"),
                     "name": str(dev.get("name") or dev.get("alias") or "noname"),
                 }
 
