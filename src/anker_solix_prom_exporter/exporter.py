@@ -192,10 +192,10 @@ anker_device_energy_today_kwh = Gauge(
     "Device energy today (kWh)",
     labelnames=["device_sn", "name"]
 )
-anker_device_string_power_watts = Gauge(
-    "anker_device_string_power_watts",
+anker_device_pv_power_watts = Gauge(
+    "anker_device_pv_power_watts",
     "PV string power (W)",
-    labelnames=["device_sn", "name", "string"]
+    labelnames=["device_sn", "name", "pv"]
 )
 anker_device_ac_port_power_watts = Gauge(
     "anker_device_ac_port_power_watts",
@@ -376,7 +376,7 @@ async def _poll_and_update_metrics(client: api.AnkerSolixApi, interval: int) -> 
                         pass
                 
                 if site.get("energy_offset_seconds") is not None:
-                    _inc_counter(anker_site_energy_offset_seconds, s_labels, site.get("energy_offset_seconds"))
+                    _set_gauge(anker_site_energy_offset_seconds, s_labels, site.get("energy_offset_seconds"))
                 
                 if site.get("energy_offset_check"):
                     try:
@@ -424,8 +424,10 @@ async def _poll_and_update_metrics(client: api.AnkerSolixApi, interval: int) -> 
                     solar_key = f"solar_power_{panel_idx}"
                     if dev.get(solar_key) is not None:
                         panel_labels = dict(d_labels)
-                        panel_labels["string"] = str(panel_idx)
-                        _set_gauge(anker_device_string_power_watts, panel_labels, dev.get(solar_key))
+                        pv_name_key = f"pv_name_{panel_idx}"
+                        pv_name = dev.get(pv_name_key) or str(panel_idx)
+                        panel_labels["pv"] = pv_name
+                        _set_gauge(anker_device_pv_power_watts, panel_labels, dev.get(solar_key))
                 
                 _set_gauge(anker_device_ac_port_power_watts, d_labels, dev.get("ac_power"))
                 _set_gauge(anker_device_other_input_power_watts, d_labels, dev.get("other_input_power"))
