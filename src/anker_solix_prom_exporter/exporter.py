@@ -120,6 +120,16 @@ anker_site_energy_offset_seconds = Gauge(
     "Energy offset in seconds for the site",
     labelnames=["site_id", "site_name"]
 )
+anker_site_total_energy_produced_kwh = Gauge(
+    "anker_site_total_energy_produced_kwh",
+    "Total energy produced by the site (kWh)",
+    labelnames=["site_id", "site_name"]
+)
+anker_site_total_savings_money = Gauge(
+    "anker_site_total_savings_money",
+    "Total monetary savings/revenue for the site",
+    labelnames=["site_id", "site_name"]
+)
 
 # Device metrics - Gauge
 anker_device_info = Gauge(
@@ -385,6 +395,17 @@ async def _poll_and_update_metrics(client: api.AnkerSolixApi, interval: int) -> 
                     except Exception:
                         pass
 
+                for stat in site.get("statistics") or []:
+                    if stat.get("type") == "1":
+                        val = stat.get("total")
+                        unit = str(stat.get("unit") or "").lower()
+                        if val is not None:
+                            f = _as_float(val)
+                            if f is not None:
+                                if unit == "wh":
+                                    f = f / 1000.0
+                                _set_gauge(anker_site_total_energy_produced_kwh, s_labels, f)
+
             # Export device metrics
             for sn, dev in client.devices.items():
                 d_labels = {
@@ -420,13 +441,20 @@ async def _poll_and_update_metrics(client: api.AnkerSolixApi, interval: int) -> 
                 _set_gauge(anker_device_plug_power_watts, d_labels, dev.get("current_power"))
                 _set_gauge(anker_device_energy_today_kwh, d_labels, dev.get("energy_today"))
                 
+                pv_names = dev.get("pv_name") or {}
                 for panel_idx in range(1, 5):
                     solar_key = f"solar_power_{panel_idx}"
                     if dev.get(solar_key) is not None:
                         panel_labels = dict(d_labels)
-                        pv_name_key = f"pv_name_{panel_idx}"
-                        pv_name = dev.get(pv_name_key) or str(panel_idx)
-                        panel_labels["pv"] = pv_name
+                        
+                        name_key = f"pv{panel_idx}_name"
+                        pv_name = None
+                        if isinstance(pv_names, dict):
+                            pv_name = pv_names.get(name_key)
+                        else:
+                            pv_name = getattr(pv_names, name_key, None)
+                            
+                        panel_labels["pv"] = pv_name or str(panel_idx)
                         _set_gauge(anker_device_pv_power_watts, panel_labels, dev.get(solar_key))
                 
                 _set_gauge(anker_device_ac_port_power_watts, d_labels, dev.get("ac_power"))

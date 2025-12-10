@@ -24,6 +24,10 @@ class FakeClient(api.AnkerSolixApi):
                 "other_loads_power": "15",
                 "retain_load": "350 W",
                 "data_valid": True,
+                "statistics": [
+                    {"type": "1", "total": "123.45", "unit": "kwh"},
+                    {"type": "2", "total": "100", "unit": "kg"},
+                ],
             }
         }
         self.devices = {
@@ -47,10 +51,12 @@ class FakeClient(api.AnkerSolixApi):
                 "solar_power_2": 60,
                 "solar_power_3": 70,
                 "solar_power_4": 80,
-                "pv_name_1": "PV1",
-                "pv_name_2": "PV2",
-                "pv_name_3": "PV3",
-                "pv_name_4": "PV4",
+                "pv_name": {
+                    "pv1_name": "PV1",
+                    "pv2_name": "PV2",
+                    "pv3_name": "PV3",
+                    "pv4_name": "PV4",
+                },
                 "ac_power": 150,
                 "other_input_power": 10,
                 "micro_inverter_low_power_limit": 100,
@@ -208,6 +214,11 @@ _metric_cases = [
         "anker_site_total_battery_soc_percent",
         None,
         lambda v: abs(float(v) - 50.0) < 1e-6,
+    ),
+    (
+        "anker_site_total_energy_produced_kwh",
+        None,
+        lambda v: float(v) == 123.45,
     ),
     # Device info
     (
