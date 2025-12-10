@@ -81,7 +81,7 @@ class FakeClient(api.AnkerSolixApi):
 @pytest.fixture
 def poll_ctx(mocker):
     fake = FakeClient(mocker)
-    spy = mocker.patch.object(exporter, "_set_metric", wraps=exporter._set_metric)
+    spy = mocker.patch.object(exporter, "_set_gauge", wraps=exporter._set_gauge)
     # Run one poll iteration
     try:
         asyncio.run(
@@ -95,29 +95,29 @@ def poll_ctx(mocker):
 
 
 def _extract_metric_call(call):
-    """Extract (name, labels, value) from a mock call to _set_metric supporting positional/keyword args."""
+    """Extract (gauge, labels, value) from a mock call to _set_gauge supporting positional/keyword args."""
     # Get args and kwargs, handling both call types
     args = getattr(call, "args", ())
     kwargs = getattr(call, "kwargs", {})
 
-    # Extract name (always first positional)
-    name = args[0] if args else None
+    # Extract gauge (always first positional)
+    gauge = args[0] if args else None
 
-    # Extract labels (keyword or 3rd positional)
-    labels = kwargs.get("labels", args[2] if len(args) >= 3 else {})
+    # Extract labels (keyword or 2nd positional)
+    labels = kwargs.get("labels", args[1] if len(args) >= 2 else {})
 
-    # Extract value (keyword or 4th positional)
-    value = kwargs.get("value", args[3] if len(args) >= 4 else None)
+    # Extract value (keyword or 3rd positional)
+    value = kwargs.get("value", args[2] if len(args) >= 3 else None)
 
-    return name, labels, value
+    return gauge, labels, value
 
 
 def _any_metric(spy, metric_name, label_pred=None, value_pred=None):
     """Check if any metric call matches the given criteria."""
     for call in spy.mock_calls:
-        name, labels, value = _extract_metric_call(call)
+        gauge, labels, value = _extract_metric_call(call)
 
-        if name != metric_name:
+        if gauge is None or gauge._name != metric_name:
             continue
 
         if label_pred and not label_pred(labels):
@@ -161,15 +161,13 @@ def test_as_float_invalid_param(value):
     assert exporter._as_float(value) is None
 
 
-def test_set_metric_sets_value_with_labels():
-    # Use a unique metric name to avoid conflicts across test runs
-    name = "test_exporter_metric_value_watts"
-    labels = {"x": "a", "y": "b"}
-    exporter._set_metric(name, "desc", labels, "123 W")
+def test_set_gauge_sets_value_with_labels():
+    # Use a metric that exists
+    labels = {"site_id": "test", "site_name": "Test"}
+    exporter._set_gauge(exporter.anker_site_home_load_power_watts, labels, "123 W")
 
-    # Retrieve gauge and assert value through public labels() handle
-    gauge = exporter._get_gauge(name, "desc", tuple(labels.keys()))
-    assert gauge.labels(**labels)._value.get() == 123.0
+    # Assert value through public labels() handle
+    assert exporter.anker_site_home_load_power_watts.labels(**labels)._value.get() == 123.0
 
 
 # The previous monolithic poll test is replaced by parametrized, single-assert tests below.
