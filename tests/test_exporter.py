@@ -234,23 +234,23 @@ _metric_cases = [
     ("anker_device_energy_today_kwh", None, lambda v: float(v) == 1.5),
     # PV strings and additional power metrics
     (
-        "anker_device_solar_power_watts",
-        lambda l: l.get("device_sn") == "devA" and l.get("panel") == "1",
+        "anker_device_string_power_watts",
+        lambda l: l.get("device_sn") == "devA" and l.get("string") == "1",
         lambda v: float(v) == 50.0,
     ),
     (
-        "anker_device_solar_power_watts",
-        lambda l: l.get("device_sn") == "devA" and l.get("panel") == "2",
+        "anker_device_string_power_watts",
+        lambda l: l.get("device_sn") == "devA" and l.get("string") == "2",
         lambda v: float(v) == 60.0,
     ),
     (
-        "anker_device_solar_power_watts",
-        lambda l: l.get("device_sn") == "devA" and l.get("panel") == "3",
+        "anker_device_string_power_watts",
+        lambda l: l.get("device_sn") == "devA" and l.get("string") == "3",
         lambda v: float(v) == 70.0,
     ),
     (
-        "anker_device_solar_power_watts",
-        lambda l: l.get("device_sn") == "devA" and l.get("panel") == "4",
+        "anker_device_string_power_watts",
+        lambda l: l.get("device_sn") == "devA" and l.get("string") == "4",
         lambda v: float(v) == 80.0,
     ),
     ("anker_device_ac_port_power_watts", None, lambda v: float(v) == 150.0),

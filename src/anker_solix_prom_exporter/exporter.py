@@ -108,14 +108,16 @@ anker_site_updated_timestamp_seconds = Counter(
     "Last update timestamp of Solarbank info as seconds since the epoch",
     labelnames=["site_id", "site_name"]
 )
-anker_site_energy_offset_seconds = Counter(
-    "anker_site_energy_offset_seconds",
-    "Energy offset in seconds for the site",
-    labelnames=["site_id", "site_name"]
-)
 anker_site_energy_offset_check = Counter(
     "anker_site_energy_offset_check",
     "Last energy offset check timestamp as seconds since the epoch",
+    labelnames=["site_id", "site_name"]
+)
+
+# Site metrics - Gauge (continued)
+anker_site_energy_offset_seconds = Gauge(
+    "anker_site_energy_offset_seconds",
+    "Energy offset in seconds for the site",
     labelnames=["site_id", "site_name"]
 )
 
@@ -190,10 +192,10 @@ anker_device_energy_today_kwh = Gauge(
     "Device energy today (kWh)",
     labelnames=["device_sn", "name"]
 )
-anker_device_solar_power_watts = Gauge(
-    "anker_device_solar_power_watts",
+anker_device_string_power_watts = Gauge(
+    "anker_device_string_power_watts",
     "PV string power (W)",
-    labelnames=["device_sn", "name", "panel"]
+    labelnames=["device_sn", "name", "string"]
 )
 anker_device_ac_port_power_watts = Gauge(
     "anker_device_ac_port_power_watts",
@@ -422,8 +424,8 @@ async def _poll_and_update_metrics(client: api.AnkerSolixApi, interval: int) -> 
                     solar_key = f"solar_power_{panel_idx}"
                     if dev.get(solar_key) is not None:
                         panel_labels = dict(d_labels)
-                        panel_labels["panel"] = str(panel_idx)
-                        _set_gauge(anker_device_solar_power_watts, panel_labels, dev.get(solar_key))
+                        panel_labels["string"] = str(panel_idx)
+                        _set_gauge(anker_device_string_power_watts, panel_labels, dev.get(solar_key))
                 
                 _set_gauge(anker_device_ac_port_power_watts, d_labels, dev.get("ac_power"))
                 _set_gauge(anker_device_other_input_power_watts, d_labels, dev.get("other_input_power"))
