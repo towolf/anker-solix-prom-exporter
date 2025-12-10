@@ -23,6 +23,7 @@ import asyncio
 import logging
 import os
 from typing import Any, Dict, Tuple
+from datetime import datetime
 
 from aiohttp import ClientSession
 from aiohttp.client_exceptions import ClientError
@@ -173,6 +174,11 @@ async def _poll_and_update_metrics(client: api.AnkerSolixApi, interval: int) -> 
                         lambda: (lambda f: (f * 100.0) if f is not None else None)(
                             _as_float(sb_info.get("total_battery_power"))
                         ),
+                    ),
+                    (
+                        "anker_site_updated_timestamp_seconds",
+                        "Last update timestamp of Solarbank info as seconds since the epoch",
+                        lambda: datetime.strptime(sb_info["updated_time"], "%Y-%m-%d %H:%M:%S").timestamp() if sb_info.get("updated_time") else None,
                     ),
                 ]
 
