@@ -89,6 +89,7 @@ class FakeClient(api.AnkerSolixApi):
                 "wired_connected": False,
                 "status": "1",
                 "charging_status": "2",
+                "charging_status_desc": "Charging",
                 "grid_status": "3",
                 "data_valid": True,
                 "is_ota_update": False,
@@ -415,7 +416,11 @@ _metric_cases = [
     ("anker_device_wired_connected", None, lambda v: float(v) == 0.0),
     # Status/flags
     ("anker_device_status_code", None, None),
-    ("anker_device_charging_status_code", None, None),
+    (
+        "anker_device_charging_status",
+        lambda l: l.get("desc") == "Charging",
+        lambda v: float(v) == 2.0
+    ),
     ("anker_device_grid_status_code", None, None),
     ("anker_device_data_valid", None, lambda v: float(v) == 1.0),
     ("anker_device_is_ota_update", None, lambda v: float(v) == 0.0),

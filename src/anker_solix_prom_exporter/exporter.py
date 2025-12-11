@@ -152,10 +152,10 @@ anker_device_status_code = Gauge(
     "Device status code",
     labelnames=["device_sn", "name"]
 )
-anker_device_charging_status_code = Gauge(
-    "anker_device_charging_status_code",
+anker_device_charging_status = Gauge(
+    "anker_device_charging_status",
     "Charging status code",
-    labelnames=["device_sn", "name"]
+    labelnames=["device_sn", "name", "desc"]
 )
 anker_device_grid_status_code = Gauge(
     "anker_device_grid_status_code",
@@ -238,7 +238,7 @@ async def _poll_and_update_metrics(client: api.AnkerSolixApi, interval: int) -> 
                 s_labels = {"site_id": str(site_id), "site_name": str(site_name)}
 
                 sb_info = site.get("solarbank_info") or {}
-                sp_info = site.get("smart_plug_info") or {}
+                # sp_info = site.get("smart_plug_info") or {}
 
                 # Combined site power metrics
                 site_power_metrics = {
@@ -248,7 +248,7 @@ async def _poll_and_update_metrics(client: api.AnkerSolixApi, interval: int) -> 
                     "total_output": sb_info.get("total_output_power"),
                     "total_charging": sb_info.get("total_charging_power"),
                     "battery_discharge": sb_info.get("battery_discharge_power"),
-                    "smart_plugs_total": sp_info.get("total_power"),
+                    # "smart_plugs_total": sp_info.get("total_power"),
                     "other_loads": site.get("other_loads_power"),
                     "retain_load_preset": site.get("retain_load"),
                 }
@@ -260,23 +260,23 @@ async def _poll_and_update_metrics(client: api.AnkerSolixApi, interval: int) -> 
                         _set_gauge(anker_site_power_watts, p_labels, p_val)
 
                 _set_gauge(anker_site_data_valid, s_labels, 1.0 if site.get("data_valid") else 0.0)
-                
+
                 total_battery_soc = sb_info.get("total_battery_power")
                 if total_battery_soc is not None:
                     f = _as_float(total_battery_soc)
                     if f is not None:
                         _set_gauge(anker_site_total_battery_soc_percent, s_labels, f * 100.0)
-                
+
                 if sb_info.get("updated_time"):
                     try:
                         timestamp = datetime.strptime(sb_info["updated_time"], "%Y-%m-%d %H:%M:%S").timestamp()
                         _set_gauge(anker_site_updated_timestamp_seconds, s_labels, timestamp)
                     except Exception:
                         pass
-                
+
                 if site.get("energy_offset_seconds") is not None:
                     _set_gauge(anker_site_energy_offset_seconds, s_labels, site.get("energy_offset_seconds"))
-                
+
                 if site.get("energy_offset_check"):
                     try:
                         timestamp = datetime.strptime(site["energy_offset_check"], "%Y-%m-%d %H:%M:%S").timestamp()
@@ -342,7 +342,7 @@ async def _poll_and_update_metrics(client: api.AnkerSolixApi, interval: int) -> 
 
                 _set_gauge(anker_device_battery_soc_percent, d_labels, dev.get("battery_soc"))
                 _set_gauge(anker_device_battery_energy_wh, d_labels, dev.get("battery_energy"))
-                
+
                 # Combined power metrics
                 power_metrics = {
                     "input": dev.get("input_power"),
@@ -363,29 +363,29 @@ async def _poll_and_update_metrics(client: api.AnkerSolixApi, interval: int) -> 
                     "set_output": dev.get("set_output_power"),
                     "set_system_output": dev.get("set_system_output_power"),
                 }
-                
+
                 for p_type, p_val in power_metrics.items():
                     if p_val is not None:
                         p_labels = dict(d_labels)
                         p_labels["type"] = p_type
                         _set_gauge(anker_device_power_watts, p_labels, p_val)
-                
+
                 pv_names = dev.get("pv_name") or {}
                 for panel_idx in range(1, 5):
                     solar_key = f"solar_power_{panel_idx}"
                     if dev.get(solar_key) is not None:
                         panel_labels = dict(d_labels)
-                        
+
                         name_key = f"pv{panel_idx}_name"
                         pv_name = None
                         if isinstance(pv_names, dict):
                             pv_name = pv_names.get(name_key)
                         else:
                             pv_name = getattr(pv_names, name_key, None)
-                            
+
                         panel_labels["pv"] = pv_name or str(panel_idx)
                         _set_gauge(anker_device_pv_power_watts, panel_labels, dev.get(solar_key))
-                
+
                 _set_gauge(anker_device_wifi_signal_percent, d_labels, dev.get("wifi_signal"))
                 _set_gauge(anker_device_wifi_rssi_dbm, d_labels, dev.get("rssi"))
                 _set_gauge(
@@ -400,7 +400,11 @@ async def _poll_and_update_metrics(client: api.AnkerSolixApi, interval: int) -> 
                 )
 
                 _set_gauge(anker_device_status_code, d_labels, dev.get("status"))
-                _set_gauge(anker_device_charging_status_code, d_labels, dev.get("charging_status"))
+
+                charging_labels = dict(d_labels)
+                charging_labels["desc"] = str(dev.get("charging_status_desc") or "")
+                _set_gauge(anker_device_charging_status, charging_labels, dev.get("charging_status"))
+
                 _set_gauge(anker_device_grid_status_code, d_labels, dev.get("grid_status"))
                 _set_gauge(
                     anker_device_data_valid,
