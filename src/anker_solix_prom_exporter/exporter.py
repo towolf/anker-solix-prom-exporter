@@ -46,50 +46,10 @@ CONSOLE.handlers[0].setFormatter(
 )
 
 # Site metrics - Gauge
-anker_site_home_load_power_watts = Gauge(
-    "anker_site_home_load_power_watts",
-    "Current site home load power",
-    labelnames=["site_id", "site_name"]
-)
-anker_site_to_home_load_power_watts = Gauge(
-    "anker_site_to_home_load_power_watts",
-    "Power from Solarbank to home load",
-    labelnames=["site_id", "site_name"]
-)
-anker_site_total_pv_power_watts = Gauge(
-    "anker_site_total_pv_power_watts",
-    "Total photovoltaic power of Solarbank(s)",
-    labelnames=["site_id", "site_name"]
-)
-anker_site_total_output_power_watts = Gauge(
-    "anker_site_total_output_power_watts",
-    "Total AC output power of Solarbank(s)",
-    labelnames=["site_id", "site_name"]
-)
-anker_site_total_charging_power_watts = Gauge(
-    "anker_site_total_charging_power_watts",
-    "Total charging power to Solarbank batteries (can be negative when discharging)",
-    labelnames=["site_id", "site_name"]
-)
-anker_site_battery_discharge_power_watts = Gauge(
-    "anker_site_battery_discharge_power_watts",
-    "Battery discharge power total (if provided)",
-    labelnames=["site_id", "site_name"]
-)
-anker_site_smart_plugs_total_power_watts = Gauge(
-    "anker_site_smart_plugs_total_power_watts",
-    "Total power of smart plugs in site",
-    labelnames=["site_id", "site_name"]
-)
-anker_site_other_loads_power_watts = Gauge(
-    "anker_site_other_loads_power_watts",
-    "Other loads (planned) power",
-    labelnames=["site_id", "site_name"]
-)
-anker_site_retain_load_preset_watts = Gauge(
-    "anker_site_retain_load_preset_watts",
-    "Site retain load preset (W)",
-    labelnames=["site_id", "site_name"]
+anker_site_power_watts = Gauge(
+    "anker_site_power_watts",
+    "Site power metrics (W)",
+    labelnames=["site_id", "site_name", "type"]
 )
 anker_site_data_valid = Gauge(
     "anker_site_data_valid",
@@ -157,95 +117,15 @@ anker_device_battery_energy_wh = Gauge(
     "Device battery energy (Wh)",
     labelnames=["device_sn", "name"]
 )
-anker_device_input_power_watts = Gauge(
-    "anker_device_input_power_watts",
-    "Device input (PV) power (W)",
-    labelnames=["device_sn", "name"]
-)
-anker_device_output_power_watts = Gauge(
-    "anker_device_output_power_watts",
-    "Device output (AC/home load) power (W)",
-    labelnames=["device_sn", "name"]
-)
-anker_device_battery_power_watts = Gauge(
-    "anker_device_battery_power_watts",
-    "Battery net power (W). Positive = discharge to AC, negative = charge",
-    labelnames=["device_sn", "name"]
-)
-anker_device_bat_charge_power_watts = Gauge(
-    "anker_device_bat_charge_power_watts",
-    "Battery charge power (W)",
-    labelnames=["device_sn", "name"]
-)
-anker_device_ac_power_watts = Gauge(
-    "anker_device_ac_power_watts",
-    "Inverter AC generation power (W)",
-    labelnames=["device_sn", "name"]
-)
-anker_device_micro_inverter_power_watts = Gauge(
-    "anker_device_micro_inverter_power_watts",
-    "Micro-inverter power (W)",
-    labelnames=["device_sn", "name"]
-)
-anker_device_micro_inverter_power_limit_watts = Gauge(
-    "anker_device_micro_inverter_power_limit_watts",
-    "Micro-inverter power limit (W)",
-    labelnames=["device_sn", "name"]
-)
-anker_device_grid_import_power_watts = Gauge(
-    "anker_device_grid_import_power_watts",
-    "Grid import power to home (W)",
-    labelnames=["device_sn", "name"]
-)
-anker_device_grid_export_power_watts = Gauge(
-    "anker_device_grid_export_power_watts",
-    "Photovoltaic export power to grid (W)",
-    labelnames=["device_sn", "name"]
-)
-anker_device_plug_power_watts = Gauge(
-    "anker_device_plug_power_watts",
-    "Smart plug current power (W)",
-    labelnames=["device_sn", "name"]
+anker_device_power_watts = Gauge(
+    "anker_device_power_watts",
+    "Device power metrics (W)",
+    labelnames=["device_sn", "name", "type"]
 )
 anker_device_pv_power_watts = Gauge(
     "anker_device_pv_power_watts",
     "PV string power (W)",
     labelnames=["device_sn", "name", "pv"]
-)
-anker_device_ac_port_power_watts = Gauge(
-    "anker_device_ac_port_power_watts",
-    "AC port output power (W)",
-    labelnames=["device_sn", "name"]
-)
-anker_device_other_input_power_watts = Gauge(
-    "anker_device_other_input_power_watts",
-    "Other input power (W)",
-    labelnames=["device_sn", "name"]
-)
-anker_device_micro_inverter_low_power_limit_watts = Gauge(
-    "anker_device_micro_inverter_low_power_limit_watts",
-    "Micro-inverter low power limit (W)",
-    labelnames=["device_sn", "name"]
-)
-anker_device_grid_to_battery_power_watts = Gauge(
-    "anker_device_grid_to_battery_power_watts",
-    "Grid to battery power (W)",
-    labelnames=["device_sn", "name"]
-)
-anker_device_pei_heating_power_watts = Gauge(
-    "anker_device_pei_heating_power_watts",
-    "PEI heating power (W)",
-    labelnames=["device_sn", "name"]
-)
-anker_device_set_output_power_watts = Gauge(
-    "anker_device_set_output_power_watts",
-    "Device preset output power (W)",
-    labelnames=["device_sn", "name"]
-)
-anker_device_set_system_output_power_watts = Gauge(
-    "anker_device_set_system_output_power_watts",
-    "System preset output power (W)",
-    labelnames=["device_sn", "name"]
 )
 anker_device_wifi_signal_percent = Gauge(
     "anker_device_wifi_signal_percent",
@@ -360,15 +240,25 @@ async def _poll_and_update_metrics(client: api.AnkerSolixApi, interval: int) -> 
                 sb_info = site.get("solarbank_info") or {}
                 sp_info = site.get("smart_plug_info") or {}
 
-                _set_gauge(anker_site_home_load_power_watts, s_labels, site.get("home_load_power"))
-                _set_gauge(anker_site_to_home_load_power_watts, s_labels, sb_info.get("to_home_load"))
-                _set_gauge(anker_site_total_pv_power_watts, s_labels, sb_info.get("total_photovoltaic_power"))
-                _set_gauge(anker_site_total_output_power_watts, s_labels, sb_info.get("total_output_power"))
-                _set_gauge(anker_site_total_charging_power_watts, s_labels, sb_info.get("total_charging_power"))
-                _set_gauge(anker_site_battery_discharge_power_watts, s_labels, sb_info.get("battery_discharge_power"))
-                _set_gauge(anker_site_smart_plugs_total_power_watts, s_labels, sp_info.get("total_power"))
-                _set_gauge(anker_site_other_loads_power_watts, s_labels, site.get("other_loads_power"))
-                _set_gauge(anker_site_retain_load_preset_watts, s_labels, site.get("retain_load"))
+                # Combined site power metrics
+                site_power_metrics = {
+                    "home_load": site.get("home_load_power"),
+                    "to_home_load": sb_info.get("to_home_load"),
+                    "total_pv": sb_info.get("total_photovoltaic_power"),
+                    "total_output": sb_info.get("total_output_power"),
+                    "total_charging": sb_info.get("total_charging_power"),
+                    "battery_discharge": sb_info.get("battery_discharge_power"),
+                    "smart_plugs_total": sp_info.get("total_power"),
+                    "other_loads": site.get("other_loads_power"),
+                    "retain_load_preset": site.get("retain_load"),
+                }
+
+                for p_type, p_val in site_power_metrics.items():
+                    if p_val is not None:
+                        p_labels = dict(s_labels)
+                        p_labels["type"] = p_type
+                        _set_gauge(anker_site_power_watts, p_labels, p_val)
+
                 _set_gauge(anker_site_data_valid, s_labels, 1.0 if site.get("data_valid") else 0.0)
                 
                 total_battery_soc = sb_info.get("total_battery_power")
@@ -452,20 +342,33 @@ async def _poll_and_update_metrics(client: api.AnkerSolixApi, interval: int) -> 
 
                 _set_gauge(anker_device_battery_soc_percent, d_labels, dev.get("battery_soc"))
                 _set_gauge(anker_device_battery_energy_wh, d_labels, dev.get("battery_energy"))
-                _set_gauge(anker_device_input_power_watts, d_labels, dev.get("input_power"))
-                _set_gauge(anker_device_output_power_watts, d_labels, dev.get("output_power"))
-                _set_gauge(anker_device_battery_power_watts, d_labels, dev.get("charging_power"))
-                _set_gauge(anker_device_bat_charge_power_watts, d_labels, dev.get("bat_charge_power"))
-                _set_gauge(anker_device_ac_power_watts, d_labels, dev.get("generate_power"))
-                _set_gauge(anker_device_micro_inverter_power_watts, d_labels, dev.get("micro_inverter_power"))
-                _set_gauge(
-                    anker_device_micro_inverter_power_limit_watts,
-                    d_labels,
-                    dev.get("micro_inverter_power_limit") or dev.get("preset_inverter_limit")
-                )
-                _set_gauge(anker_device_grid_import_power_watts, d_labels, dev.get("grid_to_home_power"))
-                _set_gauge(anker_device_grid_export_power_watts, d_labels, dev.get("photovoltaic_to_grid_power"))
-                _set_gauge(anker_device_plug_power_watts, d_labels, dev.get("current_power"))
+                
+                # Combined power metrics
+                power_metrics = {
+                    "input": dev.get("input_power"),
+                    "output": dev.get("output_power"),
+                    "charging": dev.get("charging_power"),
+                    "battery_charge": dev.get("bat_charge_power"),
+                    "generate": dev.get("generate_power"),
+                    "micro_inverter": dev.get("micro_inverter_power"),
+                    "micro_inverter_limit": dev.get("micro_inverter_power_limit") or dev.get("preset_inverter_limit"),
+                    "grid_import": dev.get("grid_to_home_power"),
+                    "grid_export": dev.get("photovoltaic_to_grid_power"),
+                    "current": dev.get("current_power"),
+                    "ac": dev.get("ac_power"),
+                    "other_input": dev.get("other_input_power"),
+                    "micro_inverter_low_limit": dev.get("micro_inverter_low_power_limit"),
+                    "grid_to_battery": dev.get("grid_to_battery_power"),
+                    "pei_heating": dev.get("pei_heating_power"),
+                    "set_output": dev.get("set_output_power"),
+                    "set_system_output": dev.get("set_system_output_power"),
+                }
+                
+                for p_type, p_val in power_metrics.items():
+                    if p_val is not None:
+                        p_labels = dict(d_labels)
+                        p_labels["type"] = p_type
+                        _set_gauge(anker_device_power_watts, p_labels, p_val)
                 
                 pv_names = dev.get("pv_name") or {}
                 for panel_idx in range(1, 5):
@@ -483,14 +386,6 @@ async def _poll_and_update_metrics(client: api.AnkerSolixApi, interval: int) -> 
                         panel_labels["pv"] = pv_name or str(panel_idx)
                         _set_gauge(anker_device_pv_power_watts, panel_labels, dev.get(solar_key))
                 
-                _set_gauge(anker_device_ac_port_power_watts, d_labels, dev.get("ac_power"))
-                _set_gauge(anker_device_other_input_power_watts, d_labels, dev.get("other_input_power"))
-                _set_gauge(anker_device_micro_inverter_low_power_limit_watts, d_labels, dev.get("micro_inverter_low_power_limit"))
-                _set_gauge(anker_device_grid_to_battery_power_watts, d_labels, dev.get("grid_to_battery_power"))
-                _set_gauge(anker_device_pei_heating_power_watts, d_labels, dev.get("pei_heating_power"))
-                _set_gauge(anker_device_set_output_power_watts, d_labels, dev.get("set_output_power"))
-                _set_gauge(anker_device_set_system_output_power_watts, d_labels, dev.get("set_system_output_power"))
-
                 _set_gauge(anker_device_wifi_signal_percent, d_labels, dev.get("wifi_signal"))
                 _set_gauge(anker_device_wifi_rssi_dbm, d_labels, dev.get("rssi"))
                 _set_gauge(

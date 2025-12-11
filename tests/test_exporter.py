@@ -197,11 +197,11 @@ def test_as_float_invalid_param(value):
 
 def test_set_gauge_sets_value_with_labels():
     # Use a metric that exists
-    labels = {"site_id": "test", "site_name": "Test"}
-    exporter._set_gauge(exporter.anker_site_home_load_power_watts, labels, "123 W")
+    labels = {"site_id": "test", "site_name": "Test", "type": "home_load"}
+    exporter._set_gauge(exporter.anker_site_power_watts, labels, "123 W")
 
     # Assert value through public labels() handle
-    assert exporter.anker_site_home_load_power_watts.labels(**labels)._value.get() == 123.0
+    assert exporter.anker_site_power_watts.labels(**labels)._value.get() == 123.0
 
 
 # The previous monolithic poll test is replaced by parametrized, single-assert tests below.
@@ -218,22 +218,50 @@ def test_poll_updates_called_param(poll_ctx, attr):
 _metric_cases = [
     # Site metrics
     (
-        "anker_site_home_load_power_watts",
-        lambda l: l.get("site_id") == "site123" and l.get("site_name") == "Home",
+        "anker_site_power_watts",
+        lambda l: l.get("site_id") == "site123" and l.get("site_name") == "Home" and l.get("type") == "home_load",
         None,
     ),
     (
-        "anker_site_to_home_load_power_watts",
-        lambda l: l.get("site_id") == "site123",
+        "anker_site_power_watts",
+        lambda l: l.get("site_id") == "site123" and l.get("type") == "to_home_load",
         None,
     ),
-    ("anker_site_total_pv_power_watts", None, lambda v: float(v) == 300.0),
-    ("anker_site_total_output_power_watts", None, lambda v: float(v) == 200.0),
-    ("anker_site_total_charging_power_watts", None, lambda v: float(v) == -50.0),
-    ("anker_site_battery_discharge_power_watts", None, lambda v: float(v) == 75.0),
-    ("anker_site_smart_plugs_total_power_watts", None, lambda v: float(v) == 30.0),
-    ("anker_site_other_loads_power_watts", None, lambda v: float(v) == 15.0),
-    ("anker_site_retain_load_preset_watts", None, lambda v: float(v) == 350.0),
+    (
+        "anker_site_power_watts",
+        lambda l: l.get("type") == "total_pv",
+        lambda v: float(v) == 300.0
+    ),
+    (
+        "anker_site_power_watts",
+        lambda l: l.get("type") == "total_output",
+        lambda v: float(v) == 200.0
+    ),
+    (
+        "anker_site_power_watts",
+        lambda l: l.get("type") == "total_charging",
+        lambda v: float(v) == -50.0
+    ),
+    (
+        "anker_site_power_watts",
+        lambda l: l.get("type") == "battery_discharge",
+        lambda v: float(v) == 75.0
+    ),
+    (
+        "anker_site_power_watts",
+        lambda l: l.get("type") == "smart_plugs_total",
+        lambda v: float(v) == 30.0
+    ),
+    (
+        "anker_site_power_watts",
+        lambda l: l.get("type") == "other_loads",
+        lambda v: float(v) == 15.0
+    ),
+    (
+        "anker_site_power_watts",
+        lambda l: l.get("type") == "retain_load_preset",
+        lambda v: float(v) == 350.0
+    ),
     ("anker_site_data_valid", None, lambda v: float(v) == 1.0),
     (
         "anker_site_total_battery_soc_percent",
@@ -274,23 +302,55 @@ _metric_cases = [
     # Device base power/energy metrics
     ("anker_device_battery_soc_percent", None, lambda v: float(v) == 80.0),
     ("anker_device_battery_energy_wh", None, lambda v: float(v) == 500.0),
-    ("anker_device_input_power_watts", None, lambda v: float(v) == 100.0),
-    ("anker_device_output_power_watts", None, lambda v: float(v) == 50.0),
-    ("anker_device_battery_power_watts", None, lambda v: float(v) == -20.0),
-    ("anker_device_bat_charge_power_watts", None, lambda v: float(v) == 20.0),
-    # Inverter/micro-inverter
-    ("anker_device_ac_power_watts", None, lambda v: float(v) == 200.0),
-    ("anker_device_micro_inverter_power_watts", None, lambda v: float(v) == 180.0),
     (
-        "anker_device_micro_inverter_power_limit_watts",
-        None,
+        "anker_device_power_watts",
+        lambda l: l.get("type") == "input",
+        lambda v: float(v) == 100.0,
+    ),
+    (
+        "anker_device_power_watts",
+        lambda l: l.get("type") == "output",
+        lambda v: float(v) == 50.0,
+    ),
+    (
+        "anker_device_power_watts",
+        lambda l: l.get("type") == "battery",
+        lambda v: float(v) == -20.0,
+    ),
+    (
+        "anker_device_power_watts",
+        lambda l: l.get("type") == "battery_charge",
+        lambda v: float(v) == 20.0,
+    ),
+    # Inverter/micro-inverter
+    (
+        "anker_device_power_watts",
+        lambda l: l.get("type") == "ac",
+        lambda v: float(v) == 200.0,
+    ),
+    (
+        "anker_device_power_watts",
+        lambda l: l.get("type") == "micro_inverter",
+        lambda v: float(v) == 180.0,
+    ),
+    (
+        "anker_device_power_watts",
+        lambda l: l.get("type") == "micro_inverter_limit",
         lambda v: float(v) == 600.0,
     ),
     # Smart meter
-    ("anker_device_grid_import_power_watts", None, lambda v: float(v) == 100.0),
-    ("anker_device_grid_export_power_watts", None, lambda v: float(v) == 0.0),
+    (
+        "anker_device_power_watts",
+        lambda l: l.get("type") == "grid_import",
+        lambda v: float(v) == 100.0,
+    ),
+    (
+        "anker_device_power_watts",
+        lambda l: l.get("type") == "grid_export",
+        lambda v: float(v) == 0.0,
+    ),
     # Smart plug
-    ("anker_device_plug_power_watts", None, None),
+    ("anker_device_power_watts", lambda l: l.get("type") == "plug", None),
     # PV strings and additional power metrics
     (
         "anker_device_pv_power_watts",
@@ -312,18 +372,42 @@ _metric_cases = [
         lambda l: l.get("device_sn") == "devA" and l.get("pv") == "PV4",
         lambda v: float(v) == 80.0,
     ),
-    ("anker_device_ac_port_power_watts", None, lambda v: float(v) == 150.0),
-    ("anker_device_other_input_power_watts", None, lambda v: float(v) == 10.0),
     (
-        "anker_device_micro_inverter_low_power_limit_watts",
-        None,
+        "anker_device_power_watts",
+        lambda l: l.get("type") == "ac_port",
+        lambda v: float(v) == 150.0,
+    ),
+    (
+        "anker_device_power_watts",
+        lambda l: l.get("type") == "other_input",
+        lambda v: float(v) == 10.0,
+    ),
+    (
+        "anker_device_power_watts",
+        lambda l: l.get("type") == "micro_inverter_low_limit",
         lambda v: float(v) == 100.0,
     ),
-    ("anker_device_grid_to_battery_power_watts", None, lambda v: float(v) == 25.0),
-    ("anker_device_pei_heating_power_watts", None, lambda v: float(v) == 5.0),
+    (
+        "anker_device_power_watts",
+        lambda l: l.get("type") == "grid_to_battery",
+        lambda v: float(v) == 25.0,
+    ),
+    (
+        "anker_device_power_watts",
+        lambda l: l.get("type") == "pei_heating",
+        lambda v: float(v) == 5.0,
+    ),
     # Presets
-    ("anker_device_set_output_power_watts", None, lambda v: float(v) == 400.0),
-    ("anker_device_set_system_output_power_watts", None, lambda v: float(v) == 800.0),
+    (
+        "anker_device_power_watts",
+        lambda l: l.get("type") == "set_output",
+        lambda v: float(v) == 400.0,
+    ),
+    (
+        "anker_device_power_watts",
+        lambda l: l.get("type") == "set_system_output",
+        lambda v: float(v) == 800.0,
+    ),
     # Connectivity
     ("anker_device_wifi_signal_percent", None, lambda v: float(v) == 70.0),
     ("anker_device_wifi_rssi_dbm", None, lambda v: float(v) == -60.0),
