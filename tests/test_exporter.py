@@ -109,7 +109,6 @@ class FakeClient(api.AnkerSolixApi):
 def poll_ctx(mocker):
     fake = FakeClient(mocker)
     spy_gauge = mocker.patch.object(exporter, "_set_gauge", wraps=exporter._set_gauge)
-    spy_counter = mocker.patch.object(exporter, "_inc_counter", wraps=exporter._inc_counter)
     # Run one poll iteration
     try:
         asyncio.run(
@@ -119,11 +118,11 @@ def poll_ctx(mocker):
         )
     except asyncio.TimeoutError:
         pass
-    return fake, spy_gauge, spy_counter
+    return fake, spy_gauge
 
 
 def _extract_metric_call(call):
-    """Extract (metric, labels, value) from a mock call to _set_gauge or _inc_counter supporting positional/keyword args."""
+    """Extract (metric, labels, value) from a mock call to _set_gauge supporting positional/keyword args."""
     # Get args and kwargs, handling both call types
     args = getattr(call, "args", ())
     kwargs = getattr(call, "kwargs", {})
@@ -140,10 +139,9 @@ def _extract_metric_call(call):
     return metric, labels, value
 
 
-def _any_metric(spies, metric_name, label_pred=None, value_pred=None):
+def _any_metric(spy_gauge, metric_name, label_pred=None, value_pred=None):
     """Check if any metric call matches the given criteria."""
-    spy_gauge, spy_counter = spies
-    all_calls = spy_gauge.mock_calls + spy_counter.mock_calls
+    all_calls = spy_gauge.mock_calls
     
     for call in all_calls:
         metric, labels, value = _extract_metric_call(call)
@@ -213,7 +211,7 @@ def test_set_gauge_sets_value_with_labels():
     "attr", ["update_sites", "update_device_details", "update_site_details", "update_device_energy"]
 )
 def test_poll_updates_called_param(poll_ctx, attr):
-    fake, _, _ = poll_ctx
+    fake, _ = poll_ctx
     assert getattr(fake, attr).await_count >= 1
 
 
@@ -258,12 +256,12 @@ _metric_cases = [
         lambda v: float(v) == 0.30,
     ),
     (
-        "anker_site_energy_today_kwh",
+        "anker_site_energy_today_kwh_total",
         lambda l: l.get("type") == "solar_production",
         lambda v: float(v) == 10.5,
     ),
     (
-        "anker_site_energy_today_kwh",
+        "anker_site_energy_today_kwh_total",
         lambda l: l.get("type") == "battery_discharge",
         lambda v: float(v) == 5.2,
     ),
@@ -346,5 +344,5 @@ _metric_cases = [
 
 @pytest.mark.parametrize("metric_name,label_pred,value_pred", _metric_cases)
 def test_metrics_emitted_param(poll_ctx, metric_name, label_pred, value_pred):
-    _, spy_gauge, spy_counter = poll_ctx
-    assert _any_metric((spy_gauge, spy_counter), metric_name, label_pred, value_pred)
+    _, spy_gauge = poll_ctx
+    assert _any_metric(spy_gauge, metric_name, label_pred, value_pred)

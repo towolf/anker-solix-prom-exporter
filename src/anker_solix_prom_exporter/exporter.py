@@ -28,10 +28,7 @@ from datetime import datetime
 from aiohttp import ClientSession
 from aiohttp.client_exceptions import ClientError
 from dotenv import load_dotenv
-from prometheus_client import Gauge, start_http_server, Counter, disable_created_metrics
-
-# Disable _created metrics for Counters
-disable_created_metrics()
+from prometheus_client import Gauge, start_http_server
 
 # Load .env before importing modules that read env at import time
 load_dotenv()
@@ -105,24 +102,24 @@ anker_site_total_battery_soc_percent = Gauge(
     labelnames=["site_id", "site_name"]
 )
 
-# Site metrics - Counter
-anker_site_updated_timestamp_seconds = Counter(
-    "anker_site_updated_timestamp_seconds",
+# Site metrics - Converted to Gauge
+anker_site_updated_timestamp_seconds = Gauge(
+    "anker_site_updated_timestamp_seconds_total",
     "Last update timestamp of Solarbank info as seconds since the epoch",
     labelnames=["site_id", "site_name"]
 )
-anker_site_energy_offset_check = Counter(
-    "anker_site_energy_offset_check",
+anker_site_energy_offset_check = Gauge(
+    "anker_site_energy_offset_check_total",
     "Last energy offset check timestamp as seconds since the epoch",
     labelnames=["site_id", "site_name"]
 )
-anker_site_energy_produced_kwh_total = Counter(
+anker_site_energy_produced_kwh_total = Gauge(
     "anker_site_energy_produced_kwh_total",
     "Total energy produced by the site (kWh)",
     labelnames=["site_id", "site_name"]
 )
-anker_site_energy_today_kwh = Counter(
-    "anker_site_energy_today_kwh",
+anker_site_energy_today_kwh = Gauge(
+    "anker_site_energy_today_kwh_total",
     "Energy values for today (kWh)",
     labelnames=["site_id", "site_name", "type"]
 )
@@ -341,13 +338,6 @@ def _set_gauge(gauge: Gauge, labels: Dict[str, str], value: Any) -> None:
     gauge.labels(**labels).set(val)
 
 
-def _inc_counter(counter: Counter, labels: Dict[str, str], value: Any) -> None:
-    val = _as_float(value)
-    if val is None:
-        return
-    counter.labels(**labels).inc(val)
-
-
 async def _poll_and_update_metrics(client: api.AnkerSolixApi, interval: int) -> None:
     """Continuously poll the API and update metrics."""
     # Site metrics labels: site_id, site_name
@@ -390,7 +380,7 @@ async def _poll_and_update_metrics(client: api.AnkerSolixApi, interval: int) -> 
                 if sb_info.get("updated_time"):
                     try:
                         timestamp = datetime.strptime(sb_info["updated_time"], "%Y-%m-%d %H:%M:%S").timestamp()
-                        _inc_counter(anker_site_updated_timestamp_seconds, s_labels, timestamp)
+                        _set_gauge(anker_site_updated_timestamp_seconds, s_labels, timestamp)
                     except Exception:
                         pass
                 
@@ -400,7 +390,7 @@ async def _poll_and_update_metrics(client: api.AnkerSolixApi, interval: int) -> 
                 if site.get("energy_offset_check"):
                     try:
                         timestamp = datetime.strptime(site["energy_offset_check"], "%Y-%m-%d %H:%M:%S").timestamp()
-                        _inc_counter(anker_site_energy_offset_check, s_labels, timestamp)
+                        _set_gauge(anker_site_energy_offset_check, s_labels, timestamp)
                     except Exception:
                         pass
 
@@ -413,7 +403,7 @@ async def _poll_and_update_metrics(client: api.AnkerSolixApi, interval: int) -> 
                             if f is not None:
                                 if unit == "wh":
                                     f = f / 1000.0
-                                _inc_counter(anker_site_energy_produced_kwh_total, s_labels, f)
+                                _set_gauge(anker_site_energy_produced_kwh_total, s_labels, f)
                     elif stat.get("type") == "3":
                         val = stat.get("total")
                         if val is not None:
@@ -441,7 +431,7 @@ async def _poll_and_update_metrics(client: api.AnkerSolixApi, interval: int) -> 
                         if f is not None:
                             energy_labels = dict(s_labels)
                             energy_labels.update({"type": key})
-                            _inc_counter(anker_site_energy_today_kwh, energy_labels, f)
+                            _set_gauge(anker_site_energy_today_kwh, energy_labels, f)
 
             # Export device metrics
             for sn, dev in client.devices.items():
