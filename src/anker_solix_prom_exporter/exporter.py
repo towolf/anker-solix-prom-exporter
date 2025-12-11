@@ -24,6 +24,7 @@ import logging
 import os
 from typing import Any, Dict
 from datetime import datetime
+from zoneinfo import ZoneInfo
 
 from aiohttp import ClientSession
 from aiohttp.client_exceptions import ClientError
@@ -269,7 +270,8 @@ async def _poll_and_update_metrics(client: api.AnkerSolixApi, interval: int) -> 
 
                 if sb_info.get("updated_time"):
                     try:
-                        timestamp = datetime.strptime(sb_info["updated_time"], "%Y-%m-%d %H:%M:%S").timestamp()
+                        dt = datetime.strptime(sb_info["updated_time"], "%Y-%m-%d %H:%M:%S")
+                        timestamp = dt.replace(tzinfo=ZoneInfo("Europe/Berlin")).timestamp()
                         _set_gauge(anker_site_updated_timestamp_seconds, s_labels, timestamp)
                     except Exception:
                         pass
@@ -279,7 +281,8 @@ async def _poll_and_update_metrics(client: api.AnkerSolixApi, interval: int) -> 
 
                 if site.get("energy_offset_check"):
                     try:
-                        timestamp = datetime.strptime(site["energy_offset_check"], "%Y-%m-%d %H:%M:%S").timestamp()
+                        dt = datetime.strptime(site["energy_offset_check"], "%Y-%m-%d %H:%M:%S")
+                        timestamp = dt.replace(tzinfo=ZoneInfo("Europe/Berlin")).timestamp()
                         _set_gauge(anker_site_energy_offset_check, s_labels, timestamp)
                     except Exception:
                         pass

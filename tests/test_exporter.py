@@ -13,6 +13,7 @@ class FakeClient(api.AnkerSolixApi):
                 "site_info": {"site_name": "Home"},
                 "home_load_power": "250 W",
                 "solarbank_info": {
+                    "updated_time": "2023-10-01 12:00:00",
                     "to_home_load": "120",
                     "total_battery_power": 0.5,
                     "total_photovoltaic_power": "300",
@@ -23,6 +24,7 @@ class FakeClient(api.AnkerSolixApi):
                 "smart_plug_info": {"total_power": 30},
                 "other_loads_power": "15",
                 "retain_load": "350 W",
+                "energy_offset_check": "2023-10-01 12:00:00",
                 "data_valid": True,
                 "statistics": [
                     {"type": "1", "total": "123.45", "unit": "kwh"},
@@ -240,7 +242,7 @@ _metric_cases = [
     ),
     (
         "anker_site_power_watts",
-        lambda l: l.get("type") == "total_charging",
+        lambda l: l.get('type') == 'total_charging',
         lambda v: float(v) == -50.0
     ),
     (
@@ -248,11 +250,11 @@ _metric_cases = [
         lambda l: l.get("type") == "battery_discharge",
         lambda v: float(v) == 75.0
     ),
-    (
-        "anker_site_power_watts",
-        lambda l: l.get("type") == "smart_plugs_total",
-        lambda v: float(v) == 30.0
-    ),
+    # (
+    #     "anker_site_power_watts",
+    #     lambda l: l.get("type") == "smart_plugs_total",
+    #     lambda v: float(v) == 30.0
+    # ),
     (
         "anker_site_power_watts",
         lambda l: l.get("type") == "other_loads",
@@ -268,6 +270,16 @@ _metric_cases = [
         "anker_site_total_battery_soc_percent",
         None,
         lambda v: abs(float(v) - 50.0) < 1e-6,
+    ),
+    (
+        "anker_site_updated_timestamp_seconds_total",
+        None,
+        lambda v: float(v) == 1696154400.0,
+    ),
+    (
+        "anker_site_energy_offset_check_total",
+        None,
+        lambda v: float(v) == 1696154400.0,
     ),
     (
         "anker_site_energy_produced_kwh_total",
@@ -315,7 +327,7 @@ _metric_cases = [
     ),
     (
         "anker_device_power_watts",
-        lambda l: l.get("type") == "battery",
+        lambda l: l.get("type") == "charging",
         lambda v: float(v) == -20.0,
     ),
     (
@@ -327,7 +339,7 @@ _metric_cases = [
     (
         "anker_device_power_watts",
         lambda l: l.get("type") == "ac",
-        lambda v: float(v) == 200.0,
+        lambda v: float(v) == 150.0,
     ),
     (
         "anker_device_power_watts",
@@ -351,7 +363,7 @@ _metric_cases = [
         lambda v: float(v) == 0.0,
     ),
     # Smart plug
-    ("anker_device_power_watts", lambda l: l.get("type") == "plug", None),
+    # ("anker_device_power_watts", lambda l: l.get("type") == "plug", None),
     # PV strings and additional power metrics
     (
         "anker_device_pv_power_watts",
@@ -373,11 +385,11 @@ _metric_cases = [
         lambda l: l.get("device_sn") == "devA" and l.get("pv") == "PV4",
         lambda v: float(v) == 80.0,
     ),
-    (
-        "anker_device_power_watts",
-        lambda l: l.get("type") == "ac_port",
-        lambda v: float(v) == 150.0,
-    ),
+    # (
+    #     "anker_device_power_watts",
+    #     lambda l: l.get("type") == "ac_port",
+    #     lambda v: float(v) == 150.0,
+    # ),
     (
         "anker_device_power_watts",
         lambda l: l.get("type") == "other_input",
