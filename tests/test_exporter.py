@@ -44,6 +44,9 @@ class FakeClient(api.AnkerSolixApi):
                         "battery_charge": "4.1",
                         "home_usage": "8.3",
                         "grid_to_home": "2.1",
+                        "solar_production_percentage": "50",
+                        "battery_discharge_percentage": "25",
+                        "other_percentage": "25",
                         "smartplug_list": [],
                     }
                 },
@@ -305,6 +308,16 @@ _metric_cases = [
         "anker_site_energy_today_kwh_total",
         lambda l: l.get("type") == "battery_discharge",
         lambda v: float(v) == 5.2,
+    ),
+    (
+        "anker_site_energy_today_percent",
+        lambda l: l.get("type") == "solar_production_percentage",
+        lambda v: float(v) == 50.0,
+    ),
+    (
+        "anker_site_energy_today_percent",
+        lambda l: l.get("type") == "battery_discharge_percentage",
+        lambda v: float(v) == 25.0,
     ),
     # Device info
     (

@@ -84,6 +84,11 @@ anker_site_energy_today_kwh_total = Gauge(
     "Energy values for today (kWh)",
     labelnames=["site_id", "site_name", "type"]
 )
+anker_site_energy_today_percent = Gauge(
+    "anker_site_energy_today_percent",
+    "Energy percentage values for today",
+    labelnames=["site_id", "site_name", "type"]
+)
 
 # Site metrics - Gauge (continued)
 anker_site_energy_offset_seconds = Gauge(
@@ -317,14 +322,17 @@ async def _poll_and_update_metrics(client: api.AnkerSolixApi, interval: int) -> 
 
                 energy_today = (site.get("energy_details") or {}).get("today") or {}
                 for key, value in energy_today.items():
-                    if key == "date" or "smartplug" in key or "percentage" in key:
+                    if key == "date" or "smartplug" in key:
                         continue
                     if value is not None:
                         f = _as_float(value)
                         if f is not None:
                             energy_labels = dict(s_labels)
                             energy_labels.update({"type": key})
-                            _set_gauge(anker_site_energy_today_kwh_total, energy_labels, f)
+                            if "percentage" in key:
+                                _set_gauge(anker_site_energy_today_percent, energy_labels, f)
+                            else:
+                                _set_gauge(anker_site_energy_today_kwh_total, energy_labels, f)
 
             # Export device metrics
             for sn, dev in client.devices.items():
