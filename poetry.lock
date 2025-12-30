@@ -201,8 +201,8 @@ python-dotenv = ">=1.2.1"
 [package.source]
 type = "git"
 url = "https://github.com/thomluther/anker-solix-api.git"
-reference = "v3.4.1"
-resolved_reference = "b43f5b104f0b32e7a701e6bf8a01a028fc5ef6c3"
+reference = "v3.5.0"
+resolved_reference = "e58eb34206cb75f77649cb380f4430a0e071b6e5"
 
 [[package]]
 name = "attrs"
@@ -1160,4 +1160,4 @@ propcache = ">=0.2.1"
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.13"
-content-hash = "f99426f8108b3c77082f2cb824018fa97a71c8bbb1182205f97032174bab7cad"
+content-hash = "043512e749dc6093ad8f828a3a2192ba6b30d2cb02d692397c83958973737fb6"
