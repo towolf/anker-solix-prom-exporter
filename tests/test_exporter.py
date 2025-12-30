@@ -98,6 +98,7 @@ class FakeClient(api.AnkerSolixApi):
                 "grid_status": "3",
                 "data_valid": True,
                 "is_ota_update": False,
+                "mqtt_supported": True,
                 "auto_upgrade": True,
                 "battery_capacity": 1600,
                 "sub_package_num": 2,
@@ -109,12 +110,40 @@ class FakeClient(api.AnkerSolixApi):
         self.update_device_details = mocker.AsyncMock(return_value={})
         self.update_site_details = mocker.AsyncMock(return_value={})
         self.update_device_energy = mocker.AsyncMock(return_value={})
+        self.startMqttSession = mocker.AsyncMock(return_value=True)
+        
+        self.mqttsession = mocker.Mock()
+        self.mqttsession.get_topic_prefix.return_value = "dt/anker_power/A17C5/APCDJQD0F35700774"
+        self.mqttsession.message_poller = mocker.AsyncMock()
 
 
 @pytest.fixture
 def poll_ctx(mocker):
     fake = FakeClient(mocker)
     spy_gauge = mocker.patch.object(exporter, "_set_gauge", wraps=exporter._set_gauge)
+
+    # Mock SolixMqttDeviceFactory
+    mock_factory = mocker.patch("anker_solix_prom_exporter.exporter.SolixMqttDeviceFactory")
+    mock_device = mocker.Mock()
+    mock_device.get_status.return_value = {
+        "photovoltaic_power": 159,
+        "output_power": 155,
+        "battery_soc": 61,
+        "temperature": 25,
+        "battery_efficiency": 98.693,
+        "last_update": "2025-12-30 14:15:44",
+        "wifi_signal": 38,
+        "home_load_preset": 130,
+        "max_load": 1200,
+        "max_load_legal": 800,
+        "heating_power": 123,
+        "pv_yield": 23.535,
+        "home_demand": 456,
+        "utc_timestamp": 1767100543,
+        "msg_timestamp": 1767099818,
+    }
+    mock_factory.return_value.create_device.return_value = mock_device
+
     # Run one poll iteration
     try:
         asyncio.run(
@@ -453,6 +482,34 @@ _metric_cases = [
     # Capacity/counters
     ("anker_device_battery_capacity_wh", None, lambda v: float(v) == 1600.0),
     ("anker_device_sub_package_num", None, lambda v: float(v) == 2.0),
+    # MQTT metrics
+    (
+        "anker_device_mqtt_power_watts",
+        lambda l: l.get("type") == "photovoltaic",
+        lambda v: float(v) == 159.0
+    ),
+    ("anker_device_mqtt_battery_soc_percent", None, lambda v: float(v) == 61.0),
+    ("anker_device_mqtt_wifi_signal_percent", None, lambda v: float(v) == 38.0),
+    ("anker_device_mqtt_home_load_preset_watts", None, lambda v: float(v) == 130.0),
+    ("anker_device_mqtt_max_load_watts", None, lambda v: float(v) == 1200.0),
+    ("anker_device_mqtt_max_load_legal_watts", None, lambda v: float(v) == 800.0),
+    ("anker_device_mqtt_utc_timestamp", None, lambda v: float(v) == 1767100543.0),
+    ("anker_device_mqtt_msg_timestamp", None, lambda v: float(v) == 1767099818.0),
+    (
+        "anker_device_mqtt_energy_total_kwh",
+        lambda l: l.get("type") == "pv_yield",
+        lambda v: abs(float(v) - 23.535) < 1e-6
+    ),
+    (
+        "anker_device_mqtt_power_watts",
+        lambda l: l.get("type") == "heating",
+        lambda v: float(v) == 123.0
+    ),
+    (
+        "anker_device_mqtt_power_watts",
+        lambda l: l.get("type") == "home_demand",
+        lambda v: float(v) == 456.0
+    ),
 ]
 
 
