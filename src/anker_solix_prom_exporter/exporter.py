@@ -295,11 +295,86 @@ async def _poll_and_update_metrics(client: api.AnkerSolixApi, interval: int) -> 
     topics = set()
     trigger_devices = set()
 
+    async def run_mqtt_loop():
+        while True:
+            try:
+                # Export MQTT metrics
+                for sn, dev in client.devices.items():
+                    if sn in mqtt_devices:
+                        d_labels = {
+                            "device_sn": str(sn),
+                            "name": str(dev.get("name") or dev.get("alias") or "noname"),
+                        }
+                        mqtt_data = mqtt_devices[sn].get_status() or {}
+
+                        if mqtt_data:
+                            # Power metrics
+                            mqtt_power_metrics = {
+                                "photovoltaic": mqtt_data.get("photovoltaic_power"),
+                                "output": mqtt_data.get("output_power"),
+                                "battery_signed": mqtt_data.get("battery_power_signed"),
+                                "ac_output_signed": mqtt_data.get("ac_output_power_signed"),
+                                "grid_to_battery": mqtt_data.get("grid_to_battery_power"),
+                                "grid_signed": mqtt_data.get("grid_power_signed"),
+                                "home_demand": mqtt_data.get("home_demand"),
+                                "pv_1": mqtt_data.get("pv_1_power"),
+                                "pv_2": mqtt_data.get("pv_2_power"),
+                                "pv_3": mqtt_data.get("pv_3_power"),
+                                "pv_4": mqtt_data.get("pv_4_power"),
+                                "pv_3rd_party": mqtt_data.get("pv_power_3rd_party"),
+                                "grid_to_home": mqtt_data.get("grid_to_home_power"),
+                                "pv_to_grid": mqtt_data.get("pv_to_grid_power"),
+                                "heating": mqtt_data.get("heating_power"),
+                            }
+                            for p_type, p_val in mqtt_power_metrics.items():
+                                if p_val is not None:
+                                    p_labels = dict(d_labels)
+                                    p_labels["type"] = p_type
+                                    _set_gauge(anker_device_mqtt_power_watts, p_labels, p_val)
+
+                            # Energy metrics
+                            mqtt_energy_metrics = {
+                                "charged": mqtt_data.get("charged_energy"),
+                                "discharged": mqtt_data.get("discharged_energy"),
+                                "grid_import": mqtt_data.get("grid_import_energy"),
+                                "grid_export": mqtt_data.get("grid_export_energy"),
+                                "home_consumption": mqtt_data.get("home_consumption"),
+                                "pv_yield": mqtt_data.get("pv_yield"),
+                            }
+                            for e_type, e_val in mqtt_energy_metrics.items():
+                                if e_val is not None:
+                                    e_labels = dict(d_labels)
+                                    e_labels["type"] = e_type
+                                    _set_gauge(anker_device_mqtt_energy_total_kwh, e_labels, e_val)
+
+                            _set_gauge(anker_device_mqtt_battery_soc_percent, d_labels, mqtt_data.get("battery_soc"))
+                            _set_gauge(anker_device_mqtt_temperature_celsius, d_labels, mqtt_data.get("temperature"))
+                            _set_gauge(anker_device_mqtt_battery_efficiency_percent, d_labels, mqtt_data.get("battery_efficiency"))
+                            _set_gauge(anker_device_mqtt_wifi_signal_percent, d_labels, mqtt_data.get("wifi_signal"))
+                            _set_gauge(anker_device_mqtt_home_load_preset_watts, d_labels, mqtt_data.get("home_load_preset"))
+                            _set_gauge(anker_device_mqtt_max_load_watts, d_labels, mqtt_data.get("max_load"))
+                            _set_gauge(anker_device_mqtt_max_load_legal_watts, d_labels, mqtt_data.get("max_load_legal"))
+                            _set_gauge(anker_device_mqtt_utc_timestamp, d_labels, mqtt_data.get("utc_timestamp"))
+                            _set_gauge(anker_device_mqtt_msg_timestamp, d_labels, mqtt_data.get("msg_timestamp"))
+
+                            if mqtt_data.get("last_update"):
+                                try:
+                                    dt = datetime.strptime(mqtt_data["last_update"], "%Y-%m-%d %H:%M:%S")
+                                    timestamp = dt.replace(tzinfo=ZoneInfo("Europe/Berlin")).timestamp()
+                                    _set_gauge(anker_device_mqtt_last_update_timestamp, d_labels, timestamp)
+                                except Exception:
+                                    pass
+            except Exception as exc:
+                CONSOLE.exception("MQTT loop error: %s", exc)
+            await asyncio.sleep(15)
+
     # Start message poller to handle subscriptions and keepalives
     if client.mqttsession:
         asyncio.create_task(
             client.mqttsession.message_poller(topics=topics, trigger_devices=trigger_devices)
         )
+    
+    asyncio.create_task(run_mqtt_loop())
 
     while True:
         try:
@@ -521,70 +596,6 @@ async def _poll_and_update_metrics(client: api.AnkerSolixApi, interval: int) -> 
 
                 _set_gauge(anker_device_battery_capacity_wh, d_labels, dev.get("battery_capacity"))
                 _set_gauge(anker_device_sub_package_num, d_labels, dev.get("sub_package_num"))
-
-                # MQTT Metrics
-                mqtt_data = {}
-                if sn in mqtt_devices:
-                    mqtt_data = mqtt_devices[sn].get_status() or {}
-                    print("MQTT data:", mqtt_data)
-
-                if mqtt_data:
-                    # Power metrics
-                    mqtt_power_metrics = {
-                        "photovoltaic": mqtt_data.get("photovoltaic_power"),
-                        "output": mqtt_data.get("output_power"),
-                        "battery_signed": mqtt_data.get("battery_power_signed"),
-                        "ac_output_signed": mqtt_data.get("ac_output_power_signed"),
-                        "grid_to_battery": mqtt_data.get("grid_to_battery_power"),
-                        "grid_signed": mqtt_data.get("grid_power_signed"),
-                        "home_demand": mqtt_data.get("home_demand"),
-                        "pv_1": mqtt_data.get("pv_1_power"),
-                        "pv_2": mqtt_data.get("pv_2_power"),
-                        "pv_3": mqtt_data.get("pv_3_power"),
-                        "pv_4": mqtt_data.get("pv_4_power"),
-                        "pv_3rd_party": mqtt_data.get("pv_power_3rd_party"),
-                        "grid_to_home": mqtt_data.get("grid_to_home_power"),
-                        "pv_to_grid": mqtt_data.get("pv_to_grid_power"),
-                        "heating": mqtt_data.get("heating_power"),
-                    }
-                    for p_type, p_val in mqtt_power_metrics.items():
-                        if p_val is not None:
-                            p_labels = dict(d_labels)
-                            p_labels["type"] = p_type
-                            _set_gauge(anker_device_mqtt_power_watts, p_labels, p_val)
-
-                    # Energy metrics
-                    mqtt_energy_metrics = {
-                        "charged": mqtt_data.get("charged_energy"),
-                        "discharged": mqtt_data.get("discharged_energy"),
-                        "grid_import": mqtt_data.get("grid_import_energy"),
-                        "grid_export": mqtt_data.get("grid_export_energy"),
-                        "home_consumption": mqtt_data.get("home_consumption"),
-                        "pv_yield": mqtt_data.get("pv_yield"),
-                    }
-                    for e_type, e_val in mqtt_energy_metrics.items():
-                        if e_val is not None:
-                            e_labels = dict(d_labels)
-                            e_labels["type"] = e_type
-                            _set_gauge(anker_device_mqtt_energy_total_kwh, e_labels, e_val)
-
-                    _set_gauge(anker_device_mqtt_battery_soc_percent, d_labels, mqtt_data.get("battery_soc"))
-                    _set_gauge(anker_device_mqtt_temperature_celsius, d_labels, mqtt_data.get("temperature"))
-                    _set_gauge(anker_device_mqtt_battery_efficiency_percent, d_labels, mqtt_data.get("battery_efficiency"))
-                    _set_gauge(anker_device_mqtt_wifi_signal_percent, d_labels, mqtt_data.get("wifi_signal"))
-                    _set_gauge(anker_device_mqtt_home_load_preset_watts, d_labels, mqtt_data.get("home_load_preset"))
-                    _set_gauge(anker_device_mqtt_max_load_watts, d_labels, mqtt_data.get("max_load"))
-                    _set_gauge(anker_device_mqtt_max_load_legal_watts, d_labels, mqtt_data.get("max_load_legal"))
-                    _set_gauge(anker_device_mqtt_utc_timestamp, d_labels, mqtt_data.get("utc_timestamp"))
-                    _set_gauge(anker_device_mqtt_msg_timestamp, d_labels, mqtt_data.get("msg_timestamp"))
-
-                    if mqtt_data.get("last_update"):
-                        try:
-                            dt = datetime.strptime(mqtt_data["last_update"], "%Y-%m-%d %H:%M:%S")
-                            timestamp = dt.replace(tzinfo=ZoneInfo("Europe/Berlin")).timestamp()
-                            _set_gauge(anker_device_mqtt_last_update_timestamp, d_labels, timestamp)
-                        except Exception:
-                            pass
 
         except (ClientError, errors.AnkerSolixError) as err:
             CONSOLE.error("%s: %s", type(err), err)
