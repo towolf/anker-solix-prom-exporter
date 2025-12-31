@@ -24,7 +24,7 @@ import logging
 import os
 from typing import Any, Dict
 from datetime import datetime
-from zoneinfo import ZoneInfo
+
 
 from aiohttp import ClientSession
 from aiohttp.client_exceptions import ClientError
@@ -211,6 +211,11 @@ anker_device_mqtt_battery_soc_percent = Gauge(
     "Device battery SOC from MQTT (percent)",
     labelnames=["device_sn", "name"]
 )
+anker_device_mqtt_main_battery_soc_percent = Gauge(
+    "anker_device_mqtt_main_battery_soc_percent",
+    "Device main battery SOC from MQTT (percent)",
+    labelnames=["device_sn", "name"]
+)
 anker_device_mqtt_temperature_celsius = Gauge(
     "anker_device_mqtt_temperature_celsius",
     "Device temperature from MQTT (Celsius)",
@@ -348,19 +353,20 @@ async def _poll_and_update_metrics(client: api.AnkerSolixApi, interval: int) -> 
                                     _set_gauge(anker_device_mqtt_energy_total_kwh, e_labels, e_val)
 
                             _set_gauge(anker_device_mqtt_battery_soc_percent, d_labels, mqtt_data.get("battery_soc"))
+                            _set_gauge(anker_device_mqtt_main_battery_soc_percent, d_labels, mqtt_data.get("main_battery_soc"))
                             _set_gauge(anker_device_mqtt_temperature_celsius, d_labels, mqtt_data.get("temperature"))
                             _set_gauge(anker_device_mqtt_battery_efficiency_percent, d_labels, mqtt_data.get("battery_efficiency"))
                             _set_gauge(anker_device_mqtt_wifi_signal_percent, d_labels, mqtt_data.get("wifi_signal"))
                             _set_gauge(anker_device_mqtt_home_load_preset_watts, d_labels, mqtt_data.get("home_load_preset"))
                             _set_gauge(anker_device_mqtt_max_load_watts, d_labels, mqtt_data.get("max_load"))
                             _set_gauge(anker_device_mqtt_max_load_legal_watts, d_labels, mqtt_data.get("max_load_legal"))
-                            _set_gauge(anker_device_mqtt_utc_timestamp, d_labels, mqtt_data.get("utc_timestamp"))
-                            _set_gauge(anker_device_mqtt_msg_timestamp, d_labels, mqtt_data.get("msg_timestamp"))
+                            _set_gauge(anker_device_mqtt_utc_timestamp, d_labels, float(mqtt_data.get("utc_timestamp") or 0) * 1000)
+                            _set_gauge(anker_device_mqtt_msg_timestamp, d_labels, float(mqtt_data.get("msg_timestamp") or 0) * 1000)
 
                             if mqtt_data.get("last_update"):
                                 try:
                                     dt = datetime.strptime(mqtt_data["last_update"], "%Y-%m-%d %H:%M:%S")
-                                    timestamp = dt.replace(tzinfo=ZoneInfo("Europe/Berlin")).timestamp()
+                                    timestamp = dt.timestamp() * 1000
                                     _set_gauge(anker_device_mqtt_last_update_timestamp, d_labels, timestamp)
                                 except Exception:
                                     pass
@@ -437,7 +443,7 @@ async def _poll_and_update_metrics(client: api.AnkerSolixApi, interval: int) -> 
                 if sb_info.get("updated_time"):
                     try:
                         dt = datetime.strptime(sb_info["updated_time"], "%Y-%m-%d %H:%M:%S")
-                        timestamp = dt.replace(tzinfo=ZoneInfo("Europe/Berlin")).timestamp()
+                        timestamp = dt.timestamp() * 1000
                         _set_gauge(anker_site_updated_timestamp_seconds, s_labels, timestamp)
                     except Exception:
                         pass
@@ -448,7 +454,7 @@ async def _poll_and_update_metrics(client: api.AnkerSolixApi, interval: int) -> 
                 if site.get("energy_offset_check"):
                     try:
                         dt = datetime.strptime(site["energy_offset_check"], "%Y-%m-%d %H:%M:%S")
-                        timestamp = dt.replace(tzinfo=ZoneInfo("Europe/Berlin")).timestamp()
+                        timestamp = dt.timestamp() * 1000
                         _set_gauge(anker_site_energy_offset_check, s_labels, timestamp)
                     except Exception:
                         pass

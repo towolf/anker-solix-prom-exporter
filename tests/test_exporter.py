@@ -25,6 +25,7 @@ class FakeClient(api.AnkerSolixApi):
                 "other_loads_power": "15",
                 "retain_load": "350 W",
                 "energy_offset_check": "2023-10-01 12:00:00",
+                "energy_offset_tz": 7200,
                 "data_valid": True,
                 "statistics": [
                     {"type": "1", "total": "123.45", "unit": "kwh"},
@@ -129,6 +130,7 @@ def poll_ctx(mocker):
         "photovoltaic_power": 159,
         "output_power": 155,
         "battery_soc": 61,
+        "main_battery_soc": 60,
         "temperature": 25,
         "battery_efficiency": 98.693,
         "last_update": "2025-12-30 14:15:44",
@@ -306,12 +308,12 @@ _metric_cases = [
     (
         "anker_site_updated_timestamp_seconds_total",
         None,
-        lambda v: float(v) == 1696154400.0,
+        lambda v: float(v) == 1696154400000.0,
     ),
     (
         "anker_site_energy_offset_check_total",
         None,
-        lambda v: float(v) == 1696154400.0,
+        lambda v: float(v) == 1696154400000.0,
     ),
     (
         "anker_site_energy_produced_kwh_total",
@@ -489,12 +491,13 @@ _metric_cases = [
         lambda v: float(v) == 159.0
     ),
     ("anker_device_mqtt_battery_soc_percent", None, lambda v: float(v) == 61.0),
+    ("anker_device_mqtt_main_battery_soc_percent", None, lambda v: float(v) == 60.0),
     ("anker_device_mqtt_wifi_signal_percent", None, lambda v: float(v) == 38.0),
     ("anker_device_mqtt_home_load_preset_watts", None, lambda v: float(v) == 130.0),
     ("anker_device_mqtt_max_load_watts", None, lambda v: float(v) == 1200.0),
     ("anker_device_mqtt_max_load_legal_watts", None, lambda v: float(v) == 800.0),
-    ("anker_device_mqtt_utc_timestamp", None, lambda v: float(v) == 1767100543.0),
-    ("anker_device_mqtt_msg_timestamp", None, lambda v: float(v) == 1767099818.0),
+    ("anker_device_mqtt_utc_timestamp", None, lambda v: float(v) == 1767100543000.0),
+    ("anker_device_mqtt_msg_timestamp", None, lambda v: float(v) == 1767099818000.0),
     (
         "anker_device_mqtt_energy_total_kwh",
         lambda l: l.get("type") == "pv_yield",
