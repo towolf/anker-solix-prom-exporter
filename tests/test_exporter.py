@@ -141,6 +141,8 @@ def poll_ctx(mocker):
         "max_load_legal": 800,
         "heating_power": 123,
         "pv_yield": 23.535,
+        "output_energy": 12.345,
+        "consumed_energy": 45.678,
         "home_demand": 456,
         "utc_timestamp": 1767100543,
         "msg_timestamp": 1767099818,
@@ -498,6 +500,16 @@ _metric_cases = [
         "anker_device_mqtt_energy_total_kwh",
         lambda l: l.get("type") == "pv_yield",
         lambda v: abs(float(v) - 23.535) < 1e-6
+    ),
+    (
+        "anker_device_mqtt_energy_total_kwh",
+        lambda l: l.get("type") == "output",
+        lambda v: abs(float(v) - 12.345) < 1e-6
+    ),
+    (
+        "anker_device_mqtt_energy_total_kwh",
+        lambda l: l.get("type") == "consumed",
+        lambda v: abs(float(v) - 45.678) < 1e-6
     ),
     (
         "anker_device_mqtt_power_watts",

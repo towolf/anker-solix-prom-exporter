@@ -331,6 +331,8 @@ async def _poll_and_update_metrics(client: api.AnkerSolixApi, interval: int) -> 
                                 "grid_export": mqtt_data.get("grid_export_energy"),
                                 "home_consumption": mqtt_data.get("home_consumption"),
                                 "pv_yield": mqtt_data.get("pv_yield"),
+                                "output": mqtt_data.get("output_energy"),
+                                "consumed": mqtt_data.get("consumed_energy"),
                             }
                             for e_type, e_val in mqtt_energy_metrics.items():
                                 if e_val is not None:
