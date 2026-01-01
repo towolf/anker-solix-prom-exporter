@@ -35,6 +35,7 @@ from prometheus_client import Gauge, start_http_server
 load_dotenv()
 
 from api import api, errors  # pylint: disable=no-name-in-module
+from api.apitypes import ApiCategories, SolixDeviceType
 from api.mqtt_factory import SolixMqttDeviceFactory
 from anker_solix_prom_exporter import util
 
@@ -70,11 +71,6 @@ anker_site_updated_timestamp_seconds = Gauge(
     "Last update timestamp of Solarbank info as seconds since the epoch",
     labelnames=["site_id", "site_name"]
 )
-anker_site_energy_offset_check = Gauge(
-    "anker_site_energy_offset_check_total",
-    "Last energy offset check timestamp as seconds since the epoch",
-    labelnames=["site_id", "site_name"]
-)
 anker_site_energy_produced_kwh_total = Gauge(
     "anker_site_energy_produced_kwh_total",
     "Total energy produced by the site (kWh)",
@@ -92,11 +88,6 @@ anker_site_energy_today_percent = Gauge(
 )
 
 # Site metrics - Gauge (continued)
-anker_site_energy_offset_seconds = Gauge(
-    "anker_site_energy_offset_seconds",
-    "Energy offset in seconds for the site",
-    labelnames=["site_id", "site_name"]
-)
 anker_site_total_savings_money = Gauge(
     "anker_site_total_savings_money",
     "Total monetary savings/revenue for the site",
@@ -172,16 +163,6 @@ anker_device_grid_status_code = Gauge(
 anker_device_data_valid = Gauge(
     "anker_device_data_valid",
     "Whether device data is valid (1) or not (0)",
-    labelnames=["device_sn", "name"]
-)
-anker_device_is_ota_update = Gauge(
-    "anker_device_is_ota_update",
-    "OTA update available (1) or not (0)",
-    labelnames=["device_sn", "name"]
-)
-anker_device_auto_upgrade = Gauge(
-    "anker_device_auto_upgrade",
-    "Auto upgrade enabled (1) or disabled (0)",
     labelnames=["device_sn", "name"]
 )
 anker_device_battery_capacity_wh = Gauge(
@@ -392,8 +373,8 @@ async def _poll_and_update_metrics(client: api.AnkerSolixApi, interval: int) -> 
         try:
             # Update caches
             await client.update_sites()
-            await client.update_device_details()
-            await client.update_site_details()
+            await client.update_device_details(exclude={SolixDeviceType.VEHICLE.value, ApiCategories.device_auto_upgrade})
+            await client.update_site_details(exclude={ApiCategories.account_info})
             await client.update_device_energy()
 
             # Update MQTT devices cache and poller sets
@@ -451,17 +432,6 @@ async def _poll_and_update_metrics(client: api.AnkerSolixApi, interval: int) -> 
                         dt = datetime.strptime(sb_info["updated_time"], "%Y-%m-%d %H:%M:%S")
                         timestamp = dt.timestamp()
                         _set_gauge(anker_site_updated_timestamp_seconds, s_labels, timestamp)
-                    except Exception:
-                        pass
-
-                if site.get("energy_offset_seconds") is not None:
-                    _set_gauge(anker_site_energy_offset_seconds, s_labels, site.get("energy_offset_seconds"))
-
-                if site.get("energy_offset_check"):
-                    try:
-                        dt = datetime.strptime(site["energy_offset_check"], "%Y-%m-%d %H:%M:%S")
-                        timestamp = dt.timestamp()
-                        _set_gauge(anker_site_energy_offset_check, s_labels, timestamp)
                     except Exception:
                         pass
 
@@ -594,16 +564,6 @@ async def _poll_and_update_metrics(client: api.AnkerSolixApi, interval: int) -> 
                     anker_device_data_valid,
                     d_labels,
                     (1.0 if dev.get("data_valid") else 0.0) if dev.get("data_valid") is not None else None
-                )
-                _set_gauge(
-                    anker_device_is_ota_update,
-                    d_labels,
-                    (1.0 if dev.get("is_ota_update") else 0.0) if dev.get("is_ota_update") is not None else None
-                )
-                _set_gauge(
-                    anker_device_auto_upgrade,
-                    d_labels,
-                    (1.0 if dev.get("auto_upgrade") else 0.0) if dev.get("auto_upgrade") is not None else None
                 )
 
                 _set_gauge(anker_device_battery_capacity_wh, d_labels, dev.get("battery_capacity"))

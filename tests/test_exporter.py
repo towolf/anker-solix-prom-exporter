@@ -312,11 +312,6 @@ _metric_cases = [
         lambda v: float(v) == 1696154400.0,
     ),
     (
-        "anker_site_energy_offset_check_total",
-        None,
-        lambda v: float(v) == 1696154400.0,
-    ),
-    (
         "anker_site_energy_produced_kwh_total",
         None,
         lambda v: float(v) == 123.45,
@@ -480,8 +475,6 @@ _metric_cases = [
     ),
     ("anker_device_grid_status_code", None, None),
     ("anker_device_data_valid", None, lambda v: float(v) == 1.0),
-    ("anker_device_is_ota_update", None, lambda v: float(v) == 0.0),
-    ("anker_device_auto_upgrade", None, lambda v: float(v) == 1.0),
     # Capacity/counters
     ("anker_device_battery_capacity_wh", None, lambda v: float(v) == 1600.0),
     ("anker_device_sub_package_num", None, lambda v: float(v) == 2.0),
