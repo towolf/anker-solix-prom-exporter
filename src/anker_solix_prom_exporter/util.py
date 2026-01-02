@@ -10,7 +10,10 @@ CONSOLE.setLevel(logging.DEBUG)
 # create console handler and set level to info
 ch = logging.StreamHandler()
 # This can be changed to DEBUG if more messages should be printed to console
-ch.setLevel(logging.INFO)
+if os.environ.get("ANKER_EXPORTER_DEBUG") == "1":
+    ch.setLevel(logging.DEBUG)
+else:
+    ch.setLevel(logging.INFO)
 CONSOLE.addHandler(ch)
 
 _CREDENTIALS = {
@@ -22,8 +25,8 @@ _CREDENTIALS = {
 
 def user() -> str:
     """Get anker account user."""
-    if _CREDENTIALS.get("USER"):
-        return _CREDENTIALS["USER"]
+    if usr := _CREDENTIALS.get("USER"):
+        return str(usr)
     CONSOLE.info("\nEnter Anker Account credentials:")
     username = input("Username (email): ")
     while not username:
@@ -33,8 +36,8 @@ def user() -> str:
 
 def password() -> str:
     """Get anker account password."""
-    if _CREDENTIALS.get("PASSWORD"):
-        return _CREDENTIALS["PASSWORD"]
+    if pwd := _CREDENTIALS.get("PASSWORD"):
+        return str(pwd)
     pwd = getpass.getpass("Password: ")
     while not pwd:
         pwd = getpass.getpass("Password: ")
@@ -43,8 +46,8 @@ def password() -> str:
 
 def country() -> str:
     """Get anker account country."""
-    if _CREDENTIALS.get("COUNTRY"):
-        return _CREDENTIALS["COUNTRY"]
+    if ctry := _CREDENTIALS.get("COUNTRY"):
+        return str(ctry)
     countrycode = input("Country ID (e.g. DE): ")
     while not countrycode:
         countrycode = input("Country ID (e.g. DE): ")

@@ -48,6 +48,10 @@ CONSOLE.handlers[0].setFormatter(
     )
 )
 
+# Add debug logs for the API usage
+logging.getLogger("api").setLevel(logging.DEBUG)
+logging.getLogger("api").addHandler(CONSOLE.handlers[0])
+
 # Site metrics - Gauge
 anker_site_power_watts = Gauge(
     "anker_site_power_watts",
