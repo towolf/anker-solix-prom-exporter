@@ -20,6 +20,7 @@ Then scrape: http://localhost:<port>/metrics
 from __future__ import annotations
 
 import asyncio
+import getpass
 import logging
 import os
 from typing import Any, Dict
@@ -37,20 +38,63 @@ load_dotenv()
 from api import api, errors  # pylint: disable=no-name-in-module
 from api.apitypes import ApiCategories, SolixDeviceType
 from api.mqtt_factory import SolixMqttDeviceFactory
-from anker_solix_prom_exporter import util
 
 # Configure console logger formatting similar to the other scripts
-CONSOLE: logging.Logger = util.CONSOLE
-CONSOLE.name = "AnkerSolixExporter"
-CONSOLE.handlers[0].setFormatter(
+CONSOLE: logging.Logger = logging.getLogger("AnkerSolixExporter")
+CONSOLE.setLevel(logging.DEBUG)
+ch = logging.StreamHandler()
+if os.environ.get("ANKER_EXPORTER_DEBUG") == "1":
+    ch.setLevel(logging.DEBUG)
+else:
+    ch.setLevel(logging.INFO)
+ch.setFormatter(
     logging.Formatter(
         fmt="%(levelname)s: %(message)s",
     )
 )
+CONSOLE.addHandler(ch)
 
 # Add debug logs for the API usage
 logging.getLogger("api").setLevel(logging.DEBUG)
 logging.getLogger("api").addHandler(CONSOLE.handlers[0])
+
+_CREDENTIALS = {
+    "USER": os.getenv("ANKERUSER"),
+    "PASSWORD": os.getenv("ANKERPASSWORD"),
+    "COUNTRY": os.getenv("ANKERCOUNTRY"),
+}
+
+
+def user() -> str:
+    """Get anker account user."""
+    if usr := _CREDENTIALS.get("USER"):
+        return str(usr)
+    CONSOLE.info("\nEnter Anker Account credentials:")
+    username = input("Username (email): ")
+    while not username:
+        username = input("Username (email): ")
+    return username
+
+
+def password() -> str:
+    """Get anker account password."""
+    if pwd := _CREDENTIALS.get("PASSWORD"):
+        return str(pwd)
+    pwd = getpass.getpass("Password: ")
+    while not pwd:
+        pwd = getpass.getpass("Password: ")
+    return pwd
+
+
+def country() -> str:
+    """Get anker account country."""
+    if ctry := _CREDENTIALS.get("COUNTRY"):
+        return str(ctry)
+    countrycode = input("Country ID (e.g. DE): ")
+    while not countrycode:
+        countrycode = input("Country ID (e.g. DE): ")
+    return countrycode
+
 
 # Site metrics - Gauge
 anker_site_power_watts = Gauge(
@@ -592,13 +636,13 @@ async def _run() -> None:
     start_http_server(port)
     CONSOLE.info("Prometheus exporter listening on :%s/metrics", port)
 
-    user = util.user()
-    pwd = util.password()
-    country = util.country()
+    usr = user()
+    pwd = password()
+    ctry = country()
 
     async with ClientSession() as websession:
-        CONSOLE.info("Authenticating to Anker Cloud for user %s...", user)
-        client = api.AnkerSolixApi(user, pwd, country, websession, CONSOLE)
+        CONSOLE.info("Authenticating to Anker Cloud for user %s...", usr)
+        client = api.AnkerSolixApi(usr, pwd, ctry, websession, CONSOLE)
         try:
             if await client.async_authenticate():
                 CONSOLE.info("Authentication: OK")
