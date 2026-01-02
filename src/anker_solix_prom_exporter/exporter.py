@@ -21,6 +21,7 @@ from __future__ import annotations
 
 import asyncio
 import getpass
+import json
 import logging
 import os
 from typing import Any, Dict
@@ -347,6 +348,23 @@ async def _poll_and_update_metrics(client: api.AnkerSolixApi, interval: int) -> 
                         mqtt_data = mqtt_devices[sn].get_status() or {}
 
                         if mqtt_data:
+                            # Log basic MQTT stats
+                            if (
+                                client.mqttsession 
+                                and client.mqttsession.is_connected() 
+                                and client.mqttsession.mqtt_stats
+                            ):
+                                CONSOLE.info(f"MQTT {client.mqttsession.mqtt_stats!s}")
+                                try:
+                                    CONSOLE.info(
+                                        f"Received Messages : {json.dumps(client.mqttsession.mqtt_stats.dev_messages)}"
+                                    )
+                                except TypeError:
+                                     # If dev_messages is not serializable (e.g. during tests with Mocks), log string representation
+                                     CONSOLE.info(
+                                        f"Received Messages : {client.mqttsession.mqtt_stats.dev_messages!s}"
+                                    )
+
                             # Power metrics
                             mqtt_power_metrics = {
                                 "photovoltaic": mqtt_data.get("photovoltaic_power"),
