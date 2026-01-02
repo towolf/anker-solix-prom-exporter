@@ -21,7 +21,6 @@ from __future__ import annotations
 
 import asyncio
 import getpass
-import json
 import logging
 import os
 from typing import Any, Dict
@@ -297,6 +296,18 @@ anker_device_mqtt_msg_timestamp = Gauge(
     labelnames=["device_sn", "name"]
 )
 
+anker_device_mqtt_recv_message_count_total = Gauge(
+    "anker_device_mqtt_recv_message_count_total",
+    "Total number of MQTT messages received",
+    labelnames=["device_sn", "name", "message_type"]
+)
+
+anker_device_mqtt_recv_bytes_total = Gauge(
+    "anker_device_mqtt_recv_bytes_total",
+    "Total bytes of MQTT messages received",
+    labelnames=["device_sn", "name", "message_type"]
+)
+
 
 def _as_float(value: Any) -> float | None:
     """Convert values like '---' or None safely to float or None."""
@@ -338,6 +349,14 @@ async def _poll_and_update_metrics(client: api.AnkerSolixApi, interval: int) -> 
     async def run_mqtt_loop():
         while True:
             try:
+                # Log global MQTT stats once per loop iteration
+                if (
+                    client.mqttsession 
+                    and client.mqttsession.is_connected() 
+                    and client.mqttsession.mqtt_stats
+                ):
+                    CONSOLE.info(f"MQTT {client.mqttsession.mqtt_stats!s}")
+
                 # Export MQTT metrics
                 for sn, dev in client.devices.items():
                     if sn in mqtt_devices:
@@ -348,22 +367,30 @@ async def _poll_and_update_metrics(client: api.AnkerSolixApi, interval: int) -> 
                         mqtt_data = mqtt_devices[sn].get_status() or {}
 
                         if mqtt_data:
-                            # Log basic MQTT stats
+                            # Export counters
                             if (
-                                client.mqttsession 
-                                and client.mqttsession.is_connected() 
+                                client.mqttsession
+                                and client.mqttsession.is_connected()
                                 and client.mqttsession.mqtt_stats
                             ):
-                                CONSOLE.info(f"MQTT {client.mqttsession.mqtt_stats!s}")
-                                try:
-                                    CONSOLE.info(
-                                        f"Received Messages : {json.dumps(client.mqttsession.mqtt_stats.dev_messages)}"
-                                    )
-                                except TypeError:
-                                     # If dev_messages is not serializable (e.g. during tests with Mocks), log string representation
-                                     CONSOLE.info(
-                                        f"Received Messages : {client.mqttsession.mqtt_stats.dev_messages!s}"
-                                    )
+                                dev_msgs = client.mqttsession.mqtt_stats.dev_messages or {}
+                                if isinstance(dev_msgs, dict):
+                                    # Look for the current device SN in the stats
+                                    if sn in dev_msgs:
+                                        device_stats = dev_msgs[sn]
+                                        if isinstance(device_stats, dict):
+                                            for msg_type, stats in device_stats.items():
+                                                if isinstance(stats, dict):
+                                                    c = stats.get("count")
+                                                    b = stats.get("bytes")
+
+                                                    msg_labels = dict(d_labels)
+                                                    msg_labels["message_type"] = str(msg_type)
+
+                                                    if c is not None:
+                                                        _set_gauge(anker_device_mqtt_recv_message_count_total, msg_labels, c)
+                                                    if b is not None:
+                                                        _set_gauge(anker_device_mqtt_recv_bytes_total, msg_labels, b)
 
                             # Power metrics
                             mqtt_power_metrics = {
@@ -434,7 +461,7 @@ async def _poll_and_update_metrics(client: api.AnkerSolixApi, interval: int) -> 
         asyncio.create_task(
             client.mqttsession.message_poller(topics=topics, trigger_devices=trigger_devices)
         )
-    
+
     asyncio.create_task(run_mqtt_loop())
 
     while True:
@@ -451,7 +478,7 @@ async def _poll_and_update_metrics(client: api.AnkerSolixApi, interval: int) -> 
                     if sn not in mqtt_devices:
                         if mdev := SolixMqttDeviceFactory(client, sn).create_device():
                             mqtt_devices[sn] = mdev
-                    
+
                     # Add to poller sets
                     if client.mqttsession:
                         topic = f"{client.mqttsession.get_topic_prefix(dev)}#"
