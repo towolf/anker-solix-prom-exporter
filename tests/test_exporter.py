@@ -112,9 +112,11 @@ class FakeClient(api.AnkerSolixApi):
         self.update_site_details = mocker.AsyncMock(return_value={})
         self.update_device_energy = mocker.AsyncMock(return_value={})
         self.startMqttSession = mocker.AsyncMock(return_value=True)
-        
+
         self.mqttsession = mocker.Mock()
-        self.mqttsession.get_topic_prefix.return_value = "dt/anker_power/A17C5/APCDJQD0F35700774"
+        self.mqttsession.get_topic_prefix.return_value = (
+            "dt/anker_power/A17C5/APCDJQD0F35700774"
+        )
         self.mqttsession.message_poller = mocker.AsyncMock()
 
 
@@ -124,7 +126,9 @@ def poll_ctx(mocker):
     spy_gauge = mocker.patch.object(exporter, "_set_gauge", wraps=exporter._set_gauge)
 
     # Mock SolixMqttDeviceFactory
-    mock_factory = mocker.patch("anker_solix_prom_exporter.exporter.SolixMqttDeviceFactory")
+    mock_factory = mocker.patch(
+        "anker_solix_prom_exporter.exporter.SolixMqttDeviceFactory"
+    )
     mock_device = mocker.Mock()
     mock_device.get_status.return_value = {
         "photovoltaic_power": 159,
@@ -146,6 +150,17 @@ def poll_ctx(mocker):
         "home_demand": 456,
         "utc_timestamp": 1767100543,
         "msg_timestamp": 1767099818,
+        "solarbank_ac_output_power_signed_total": 500,
+        "ac_output_power_signed_total": 450,
+        "output_power_signed_total": 400,
+        "home_demand_total": 800,
+        "pv_power_total": 600,
+        "ac_socket_power": 50,
+        "ac_input_limit": 1000,
+        "pv_limit": 1200,
+        "battery_heating": 3,
+        "grid_export_disabled": 1,
+        "grid_status": 1,
     }
     mock_factory.return_value.create_device.return_value = mock_device
 
@@ -182,13 +197,13 @@ def _extract_metric_call(call):
 def _any_metric(spy_gauge, metric_name, label_pred=None, value_pred=None):
     """Check if any metric call matches the given criteria."""
     all_calls = spy_gauge.mock_calls
-    
+
     for call in all_calls:
         metric, labels, value = _extract_metric_call(call)
 
         if metric is None:
-             continue
-        
+            continue
+
         print(f"Checking call: {metric._name} vs {metric_name}")
 
         if metric._name != metric_name:
@@ -248,7 +263,13 @@ def test_set_gauge_sets_value_with_labels():
 
 
 @pytest.mark.parametrize(
-    "attr", ["update_sites", "update_device_details", "update_site_details", "update_device_energy"]
+    "attr",
+    [
+        "update_sites",
+        "update_device_details",
+        "update_site_details",
+        "update_device_energy",
+    ],
 )
 def test_poll_updates_called_param(poll_ctx, attr):
     fake, _ = poll_ctx
@@ -259,7 +280,11 @@ _metric_cases = [
     # Site metrics
     (
         "anker_site_power_watts",
-        lambda l: l.get("site_id") == "site123" and l.get("site_name") == "Home" and l.get("type") == "home_load",
+        lambda l: (
+            l.get("site_id") == "site123"
+            and l.get("site_name") == "Home"
+            and l.get("type") == "home_load"
+        ),
         None,
     ),
     (
@@ -270,22 +295,22 @@ _metric_cases = [
     (
         "anker_site_power_watts",
         lambda l: l.get("type") == "total_pv",
-        lambda v: float(v) == 300.0
+        lambda v: float(v) == 300.0,
     ),
     (
         "anker_site_power_watts",
         lambda l: l.get("type") == "total_output",
-        lambda v: float(v) == 200.0
+        lambda v: float(v) == 200.0,
     ),
     (
         "anker_site_power_watts",
-        lambda l: l.get('type') == 'total_charging',
-        lambda v: float(v) == -50.0
+        lambda l: l.get("type") == "total_charging",
+        lambda v: float(v) == -50.0,
     ),
     (
         "anker_site_power_watts",
         lambda l: l.get("type") == "battery_discharge",
-        lambda v: float(v) == 75.0
+        lambda v: float(v) == 75.0,
     ),
     # (
     #     "anker_site_power_watts",
@@ -295,12 +320,12 @@ _metric_cases = [
     (
         "anker_site_power_watts",
         lambda l: l.get("type") == "other_loads",
-        lambda v: float(v) == 15.0
+        lambda v: float(v) == 15.0,
     ),
     (
         "anker_site_power_watts",
         lambda l: l.get("type") == "retain_load_preset",
-        lambda v: float(v) == 350.0
+        lambda v: float(v) == 350.0,
     ),
     ("anker_site_data_valid", None, lambda v: float(v) == 1.0),
     (
@@ -473,7 +498,7 @@ _metric_cases = [
     (
         "anker_device_charging_status",
         lambda l: l.get("desc") == "Charging",
-        lambda v: float(v) == 2.0
+        lambda v: float(v) == 2.0,
     ),
     ("anker_device_grid_status_code", None, None),
     ("anker_device_data_valid", None, lambda v: float(v) == 1.0),
@@ -484,12 +509,20 @@ _metric_cases = [
     (
         "anker_device_mqtt_power_watts",
         lambda l: l.get("type") == "photovoltaic",
-        lambda v: float(v) == 159.0
+        lambda v: float(v) == 159.0,
     ),
     ("anker_device_mqtt_battery_soc_percent", None, lambda v: float(v) == 61.0),
     ("anker_device_mqtt_main_battery_soc_percent", None, lambda v: float(v) == 60.0),
-    ("anker_device_mqtt_battery_efficiency_percent", None, lambda v: abs(float(v) - 98.693) < 1e-6),
-    ("anker_device_mqtt_device_efficiency_percent", None, lambda v: abs(float(v) - 95.5) < 1e-6),
+    (
+        "anker_device_mqtt_battery_efficiency_percent",
+        None,
+        lambda v: abs(float(v) - 98.693) < 1e-6,
+    ),
+    (
+        "anker_device_mqtt_device_efficiency_percent",
+        None,
+        lambda v: abs(float(v) - 95.5) < 1e-6,
+    ),
     ("anker_device_mqtt_wifi_signal_percent", None, lambda v: float(v) == 38.0),
     ("anker_device_mqtt_home_load_preset_watts", None, lambda v: float(v) == 130.0),
     ("anker_device_mqtt_max_load_watts", None, lambda v: float(v) == 1200.0),
@@ -499,28 +532,63 @@ _metric_cases = [
     (
         "anker_device_mqtt_energy_total_kwh",
         lambda l: l.get("type") == "pv_yield",
-        lambda v: abs(float(v) - 23.535) < 1e-6
+        lambda v: abs(float(v) - 23.535) < 1e-6,
     ),
     (
         "anker_device_mqtt_energy_total_kwh",
         lambda l: l.get("type") == "output",
-        lambda v: abs(float(v) - 12.345) < 1e-6
+        lambda v: abs(float(v) - 12.345) < 1e-6,
     ),
     (
         "anker_device_mqtt_energy_total_kwh",
         lambda l: l.get("type") == "consumed",
-        lambda v: abs(float(v) - 45.678) < 1e-6
+        lambda v: abs(float(v) - 45.678) < 1e-6,
     ),
     (
         "anker_device_mqtt_power_watts",
         lambda l: l.get("type") == "heating",
-        lambda v: float(v) == 123.0
+        lambda v: float(v) == 123.0,
     ),
     (
         "anker_device_mqtt_power_watts",
         lambda l: l.get("type") == "home_demand",
-        lambda v: float(v) == 456.0
+        lambda v: float(v) == 456.0,
     ),
+    (
+        "anker_device_mqtt_power_watts",
+        lambda l: l.get("type") == "solarbank_output_total",
+        lambda v: float(v) == 500.0,
+    ),
+    (
+        "anker_device_mqtt_power_watts",
+        lambda l: l.get("type") == "ac_output_total",
+        lambda v: float(v) == 450.0,
+    ),
+    (
+        "anker_device_mqtt_power_watts",
+        lambda l: l.get("type") == "output_total",
+        lambda v: float(v) == 400.0,
+    ),
+    (
+        "anker_device_mqtt_power_watts",
+        lambda l: l.get("type") == "home_demand_total",
+        lambda v: float(v) == 800.0,
+    ),
+    (
+        "anker_device_mqtt_power_watts",
+        lambda l: l.get("type") == "pv_total",
+        lambda v: float(v) == 600.0,
+    ),
+    (
+        "anker_device_mqtt_power_watts",
+        lambda l: l.get("type") == "ac_socket",
+        lambda v: float(v) == 50.0,
+    ),
+    ("anker_device_mqtt_ac_input_limit_watts", None, lambda v: float(v) == 1000.0),
+    ("anker_device_mqtt_pv_limit_watts", None, lambda v: float(v) == 1200.0),
+    ("anker_device_mqtt_battery_heating_status", None, lambda v: float(v) == 3.0),
+    ("anker_device_mqtt_grid_export_disabled", None, lambda v: float(v) == 1.0),
+    ("anker_device_mqtt_grid_status_code", None, lambda v: float(v) == 1.0),
 ]
 
 
