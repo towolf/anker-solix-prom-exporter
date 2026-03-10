@@ -1,4 +1,5 @@
 import asyncio
+import datetime
 import pytest
 from anker_solix_prom_exporter import exporter
 
@@ -336,7 +337,15 @@ _metric_cases = [
     (
         "anker_site_updated_timestamp_seconds_total",
         None,
-        lambda v: float(v) == 1696154400.0,
+        lambda v: (
+            abs(
+                float(v)
+                - datetime.datetime.strptime(
+                    "2023-10-01 12:00:00", "%Y-%m-%d %H:%M:%S"
+                ).timestamp()
+            )
+            < 1.0
+        ),
     ),
     (
         "anker_site_energy_produced_kwh_total",
