@@ -364,34 +364,38 @@ async def _poll_and_update_metrics(client: api.AnkerSolixApi, interval: int) -> 
                             "device_sn": str(sn),
                             "name": str(dev.get("name") or dev.get("alias") or "noname"),
                         }
+
+                        # Export MQTT counters (independent of payload parsing status)
+                        if (
+                            client.mqttsession
+                            and client.mqttsession.is_connected()
+                            and client.mqttsession.mqtt_stats
+                        ):
+                            dev_msgs = client.mqttsession.mqtt_stats.dev_messages or {}
+                            if isinstance(dev_msgs, dict):
+                                # MQTT Stats are keyed by Product Number (PN), not Serial Number (SN)
+                                pn = str(dev.get("device_pn") or "")
+                                
+                                # Look for the device PN in the stats
+                                device_stats = dev_msgs.get(pn)
+                                
+                                if isinstance(device_stats, dict):
+                                    for msg_type, stats in device_stats.items():
+                                        if isinstance(stats, dict):
+                                            c = stats.get("count")
+                                            b = stats.get("bytes")
+
+                                            msg_labels = dict(d_labels)
+                                            msg_labels["message_type"] = str(msg_type)
+
+                                            if c is not None:
+                                                _set_gauge(anker_device_mqtt_recv_message_count_total, msg_labels, c)
+                                            if b is not None:
+                                                _set_gauge(anker_device_mqtt_recv_bytes_total, msg_labels, b)
+
                         mqtt_data = mqtt_devices[sn].get_status() or {}
 
                         if mqtt_data:
-                            # Export counters
-                            if (
-                                client.mqttsession
-                                and client.mqttsession.is_connected()
-                                and client.mqttsession.mqtt_stats
-                            ):
-                                dev_msgs = client.mqttsession.mqtt_stats.dev_messages or {}
-                                if isinstance(dev_msgs, dict):
-                                    # Look for the current device SN in the stats
-                                    if sn in dev_msgs:
-                                        device_stats = dev_msgs[sn]
-                                        if isinstance(device_stats, dict):
-                                            for msg_type, stats in device_stats.items():
-                                                if isinstance(stats, dict):
-                                                    c = stats.get("count")
-                                                    b = stats.get("bytes")
-
-                                                    msg_labels = dict(d_labels)
-                                                    msg_labels["message_type"] = str(msg_type)
-
-                                                    if c is not None:
-                                                        _set_gauge(anker_device_mqtt_recv_message_count_total, msg_labels, c)
-                                                    if b is not None:
-                                                        _set_gauge(anker_device_mqtt_recv_bytes_total, msg_labels, b)
-
                             # Power metrics
                             mqtt_power_metrics = {
                                 "photovoltaic": mqtt_data.get("photovoltaic_power"),
